@@ -13,20 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.gephi.maven;
+package org.gephi.maven.json;
 
 import java.util.List;
 
-/**
- * Structure with the data needed to describe a plugin or suite of plugins.
- */
-public class PluginMetadata {
-    
-    protected String id;
-    protected String name;
-    protected String shortDescription;
-    protected String longDescription;
-    protected String license;
-    protected List<String> authors;
-    protected String category;
+public class PluginsMetadata {
+
+    public List<PluginMetadata> plugins;
 }

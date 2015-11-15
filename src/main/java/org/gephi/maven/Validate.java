@@ -15,9 +15,10 @@
  */
 package org.gephi.maven;
 
+import org.gephi.maven.json.PluginMetadata;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.maven.model.Dependency;
+import java.util.Map;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -50,6 +51,7 @@ public class Validate extends AbstractMojo {
      */
     private ManifestUtils manifestUtils;
 
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         manifestUtils = new ManifestUtils(sourceManifestFile, getLog());
         if (reactorProjects != null && reactorProjects.size() > 0) {
@@ -81,40 +83,24 @@ public class Validate extends AbstractMojo {
     }
 
     private void executeMultiModuleProject(List<MavenProject> projects) throws MojoExecutionException, MojoFailureException {
-        MavenProject topPlugin = null;
         // Multiple NBM modules
-        List<MavenProject> children = new ArrayList<MavenProject>();
-        for (MavenProject proj : projects) {
-            List<Dependency> dependencies = proj.getDependencies();
-            getLog().debug("Investigating the " + dependencies.size() + " dependencies of project '" + proj.getName() + "'");
-            for (Dependency d : dependencies) {
-                for (MavenProject projDependency : projects) {
-                    if (projDependency != proj
-                            && projDependency.getArtifactId().equals(d.getArtifactId())
-                            && projDependency.getGroupId().equals(d.getGroupId())
-                            && projDependency.getVersion().equals(d.getVersion())) {
-                        // Dependencies to other NBMs found
-                        getLog().debug("Found a dependency that matches another module '" + proj.getName() + "' -> '" + projDependency.getName() + "'");
-                        children.add(projDependency);
-                        if (topPlugin != null && !topPlugin.equals(proj)) {
-                            throw new MojoExecutionException("Multiple suites detected, this is not supported");
-                        }
-                        topPlugin = proj;
-                    }
-                }
-            }
-        }
-        if (topPlugin == null) {
+        Map<MavenProject, List<MavenProject>> tree = ModuleUtils.getModulesTree(projects, getLog());
+        if (tree.isEmpty()) {
             throw new MojoExecutionException("Multiple modules have been found but no suite detected, make sure one of the module has dependencies on the others");
+        } else if (tree.size() > 1) {
+            throw new MojoExecutionException("Multiple module suites have been found, this is not supported");
         }
-        getLog().info("Suite of modules found: '" + topPlugin.getName() + "'");
+        Map.Entry<MavenProject, List<MavenProject>> entry = tree.entrySet().iterator().next();
+        List<MavenProject> children = entry.getValue();
+        children.remove(entry.getKey());
+        getLog().info("Suite of modules found: '" + entry.getKey().getName() + "'");
         for (MavenProject child : children) {
             getLog().info("   '" + child.getName() + "' is a dependency");
         }
         for (MavenProject child : children) {
             manifestUtils.checkManifestShowClientFalse(child);
         }
-        checkMetadata(topPlugin);
+        checkMetadata(entry.getKey());
     }
 
     private void checkMetadata(MavenProject project) throws MojoExecutionException {

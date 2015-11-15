@@ -63,6 +63,7 @@ public class Run extends AbstractMojo {
     @Parameter(required = true, defaultValue = "${project.build.directory}/gephi")
     private File gephiDirectory;
 
+    @Override
     public void execute() throws MojoExecutionException {
         gephiUserdir.mkdirs();
 
@@ -134,6 +135,7 @@ public class Run extends AbstractMojo {
             getLog().info("Executing: " + cmdLine.toString());
             StreamConsumer out = new StreamConsumer() {
 
+                @Override
                 public void consumeLine(String line) {
                     getLog().info(line);
                 }

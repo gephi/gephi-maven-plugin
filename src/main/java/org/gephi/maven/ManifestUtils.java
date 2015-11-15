@@ -15,6 +15,7 @@
  */
 package org.gephi.maven;
 
+import org.gephi.maven.json.PluginMetadata;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -99,8 +100,8 @@ public class ManifestUtils {
         }
 
         metadata.name = brandingName;
-        metadata.shortDescription = brandingShortDescription;
-        metadata.longDescription = brandingLongDescrption;
+        metadata.short_description = brandingShortDescription;
+        metadata.long_description = brandingLongDescrption;
         metadata.category = brandingDisplayCategory;
     }
 

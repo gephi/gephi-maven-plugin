@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.gephi.maven.json.Author;
 
 /**
  * Metadata utils.
@@ -53,15 +54,17 @@ public class MetadataUtils {
      * @param project project
      * @return list of authors or null if not found
      */
-    protected static List<String> getAuthors(MavenProject project) {
+    protected static List<Author> getAuthors(MavenProject project) {
         Plugin nbmPlugin = lookupNbmPlugin(project);
         if (nbmPlugin != null) {
             Xpp3Dom config = (Xpp3Dom) nbmPlugin.getConfiguration();
             if (config != null && config.getChild("author") != null) {
                 String authors = config.getChild("author").getValue();
-                List<String> res = new ArrayList<String>();
+                List<Author> res = new ArrayList<Author>();
                 for (String a : authors.split(",")) {
-                    res.add(a.trim());
+                    Author author = new Author();
+                    author.name = a.trim();
+                    res.add(author);
                 }
                 return res;
             }
