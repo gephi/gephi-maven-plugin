@@ -19,9 +19,16 @@ import org.gephi.maven.json.PluginsMetadata;
 import org.gephi.maven.json.PluginMetadata;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -73,6 +80,12 @@ public class BuildMetadata extends AbstractMojo {
      */
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMMMM d, yyyy");
 
+    /**
+     * Metadata url.
+     */
+    @Parameter(required = true)
+    protected String metadataUrl;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         String gephiVersion = (String) project.getProperties().get("gephi.version");
@@ -102,13 +115,55 @@ public class BuildMetadata extends AbstractMojo {
             // Get all modules with dependencies
             Map<MavenProject, List<MavenProject>> tree = ModuleUtils.getModulesTree(modules, getLog());
 
+            //Download previous file
+            File pluginsJsonFile = new File(outputDirectory, "plugins.json");
+            try {
+                URL url = new URL(metadataUrl + "plugins.json");
+                ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                FileOutputStream fos = new FileOutputStream(pluginsJsonFile);
+                long read = fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                getLog().debug("Read " + read + "bytes from url '" + url + "' and write to '" + pluginsJsonFile.getAbsolutePath() + "'");
+            } catch (Exception e) {
+                throw new MojoExecutionException("Error while downloading previous 'plugins.json'", e);
+            }
+
+            // Init json
+            PluginsMetadata pluginsMetadata;
+            Gson gson = new GsonBuilder().serializeNulls().setPrettyPrinting().create();
+            if (pluginsJsonFile.exists()) {
+                try {
+                    FileReader reader = new FileReader(pluginsJsonFile);
+                    pluginsMetadata = gson.fromJson(reader, PluginsMetadata.class);
+                    reader.close();
+                    getLog().debug("Read previous plugins.json file");
+                } catch (JsonSyntaxException e) {
+                    throw new MojoExecutionException("Error while reading previous 'plugins.json'", e);
+                } catch (JsonIOException e) {
+                    throw new MojoExecutionException("Error while reading previous 'plugins.json'", e);
+                } catch (IOException e) {
+                    throw new MojoExecutionException("Error while reading previous 'plugins.json'", e);
+                }
+            } else {
+                pluginsMetadata = new PluginsMetadata();
+                pluginsMetadata.plugins = new ArrayList<PluginMetadata>();
+                getLog().debug("Create plugins.json");
+            }
+
             // Build metadata
-            PluginsMetadata pluginsMetadata = new PluginsMetadata();
-            List<PluginMetadata> pluginMetadatas = new ArrayList<PluginMetadata>();
             for (Map.Entry<MavenProject, List<MavenProject>> entry : tree.entrySet()) {
                 MavenProject topPlugin = entry.getKey();
                 PluginMetadata pm = new PluginMetadata();
                 pm.id = topPlugin.getGroupId() + "." + topPlugin.getArtifactId();
+
+                // Find previous
+                for (PluginMetadata oldPm : pluginsMetadata.plugins) {
+                    if (oldPm.id.equals(pm.id)) {
+                        pm = oldPm;
+                        getLog().debug("Found matching plugin id=" + pm.id + " in previous plugins.json");
+                        break;
+                    }
+                }
+
                 manifestUtils.readManifestMetadata(topPlugin, pm);
                 pm.license = MetadataUtils.getLicenseName(topPlugin);
                 pm.authors = MetadataUtils.getAuthors(topPlugin);
@@ -124,17 +179,14 @@ public class BuildMetadata extends AbstractMojo {
                 v.url = gephiVersion + "/" + ModuleUtils.getModuleDownloadPath(entry.getKey(), entry.getValue(), new File(outputDirectory, gephiVersion), getLog());
                 pm.versions.put(gephiVersion, v);
 
-                pluginMetadatas.add(pm);
+                pluginsMetadata.plugins.add(pm);
             }
-            pluginsMetadata.plugins = pluginMetadatas;
 
-            // Build json file
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(pluginsMetadata);
 
             // Write json file
             try {
-                FileWriter writer = new FileWriter(new File(outputDirectory, "plugins.json"));
+                FileWriter writer = new FileWriter(pluginsJsonFile);
                 writer.append(json);
                 writer.close();
             } catch (IOException ex) {
