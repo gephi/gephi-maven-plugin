@@ -15,7 +15,6 @@
  */
 package org.gephi.maven;
 
-import org.gephi.maven.json.PluginMetadata;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +25,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.gephi.maven.json.PluginMetadata;
 
 /**
  * Validate the plugin.
@@ -50,6 +50,12 @@ public class Validate extends AbstractMojo {
      * Manifest Utils.
      */
     private ManifestUtils manifestUtils;
+
+    /**
+     * The Maven project.
+     */
+    @Parameter(required = true, readonly = true, property = "project")
+    private MavenProject project;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -77,9 +83,10 @@ public class Validate extends AbstractMojo {
         }
     }
 
-    private void executeSingleModuleProject(MavenProject project) throws MojoExecutionException, MojoFailureException {
-        getLog().info("Unique module found: '" + project.getName() + "'");
-        checkMetadata(project);
+    private void executeSingleModuleProject(MavenProject moduleProject) throws MojoExecutionException, MojoFailureException {
+        getLog().info("Unique module found: '" + moduleProject.getName() + "'");
+        checkGephiVersion(moduleProject);
+        checkMetadata(moduleProject);
     }
 
     private void executeMultiModuleProject(List<MavenProject> projects) throws MojoExecutionException, MojoFailureException {
@@ -92,26 +99,49 @@ public class Validate extends AbstractMojo {
         }
         Map.Entry<MavenProject, List<MavenProject>> entry = tree.entrySet().iterator().next();
         List<MavenProject> children = entry.getValue();
+        checkSameGephiVersion(children);
+
         children.remove(entry.getKey());
         getLog().info("Suite of modules found: '" + entry.getKey().getName() + "'");
         for (MavenProject child : children) {
             getLog().info("   '" + child.getName() + "' is a dependency");
         }
         for (MavenProject child : children) {
+            checkGephiVersion(child);
             manifestUtils.checkManifestShowClientFalse(child);
         }
+        checkGephiVersion(entry.getKey());
         checkMetadata(entry.getKey());
     }
 
-    private void checkMetadata(MavenProject project) throws MojoExecutionException {
-        if (MetadataUtils.getLicenseName(project) == null) {
-            throw new MojoExecutionException("The 'licenseName' configuration should be set for the project '" + project.getName() + "'. This can be added to the configuration of the 'nbm-maven-plugin' plugin. In addition, a 'licenseFile' can be specified, relative to the module's root folder.");
+    private void checkMetadata(MavenProject moduleProject) throws MojoExecutionException {
+        if (MetadataUtils.getLicenseName(moduleProject) == null) {
+            throw new MojoExecutionException("The 'licenseName' configuration should be set for the project '" + moduleProject.getName() + "'. This can be added to the configuration of the 'nbm-maven-plugin' plugin. In addition, a 'licenseFile' can be specified, relative to the module's root folder.");
         }
-        if (MetadataUtils.getAuthors(project) == null) {
-            throw new MojoExecutionException("The 'author' configuration should be set fot the project '" + project.getName() + "'. This can be added to the configuration of the 'nbm-maven-plugin' plugin. Multiple authors can be specificed, separated by a comma.");
+        if (MetadataUtils.getAuthors(moduleProject) == null) {
+            throw new MojoExecutionException("The 'author' configuration should be set fot the project '" + moduleProject.getName() + "'. This can be added to the configuration of the 'nbm-maven-plugin' plugin. Multiple authors can be specificed, separated by a comma.");
         }
 
-        manifestUtils.readManifestMetadata(project, new PluginMetadata());
+        manifestUtils.readManifestMetadata(moduleProject, new PluginMetadata());
     }
 
+    private void checkGephiVersion(MavenProject moduleProject) throws MojoExecutionException {
+        String moduleVersion = moduleProject.getProperties().getProperty("gephi.version");
+        String projectVersion = project.getProperties().getProperty("gephi.version");
+        if (!moduleVersion.equals(projectVersion)) {
+            getLog().warn("The project '" + moduleProject.getName() + "' depends on Gephi version '" + moduleVersion + "' but '" + projectVersion + "' is expected, it will be ignored");
+        }
+    }
+
+    private void checkSameGephiVersion(List<MavenProject> projects) throws MojoExecutionException {
+        String key = null;
+        for (MavenProject moduleProject : projects) {
+            String moduleVersion = moduleProject.getProperties().getProperty("gephi.version");
+            if (key == null) {
+                key = moduleVersion;
+            } else if (!key.equals(moduleVersion)) {
+                throw new MojoExecutionException("Inconsistent 'gephi.version' property between modules of a same suite. All modules of the same and their plugin dependencies (if any) should have the same 'gephi.version'.");
+            }
+        }
+    }
 }

@@ -75,14 +75,17 @@ public class BuildMetadata extends AbstractMojo {
             }
 
             ManifestUtils manifestUtils = new ManifestUtils(sourceManifestFile, getLog());
+
+            // Get all modules with dependencies
             Map<MavenProject, List<MavenProject>> tree = ModuleUtils.getModulesTree(modules, getLog());
 
+            // Build metadata
             PluginsMetadata pluginsMetadata = new PluginsMetadata();
             List<PluginMetadata> pluginMetadatas = new ArrayList<PluginMetadata>();
             for (Map.Entry<MavenProject, List<MavenProject>> entry : tree.entrySet()) {
                 MavenProject topPlugin = entry.getKey();
                 PluginMetadata pm = new PluginMetadata();
-                pm.id = topPlugin.getArtifactId() + "." + topPlugin.getGroupId();
+                pm.id = topPlugin.getGroupId() + "." + topPlugin.getArtifactId();
                 manifestUtils.readManifestMetadata(topPlugin, pm);
                 pm.license = MetadataUtils.getLicenseName(topPlugin);
                 pm.authors = MetadataUtils.getAuthors(topPlugin);
@@ -93,9 +96,11 @@ public class BuildMetadata extends AbstractMojo {
             }
             pluginsMetadata.plugins = pluginMetadatas;
 
+            // Build json file
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(pluginsMetadata);
 
+            // Write json file
             try {
                 FileWriter writer = new FileWriter(new File(outputDirectory, "plugins.json"));
                 writer.append(json);
