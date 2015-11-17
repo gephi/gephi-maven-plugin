@@ -18,6 +18,7 @@ package org.gephi.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ public class ModuleUtils {
         for (MavenProject proj : modules) {
             List<Dependency> dependencies = proj.getDependencies();
             log.debug("Investigating the " + dependencies.size() + " dependencies of project '" + proj.getName() + "'");
+            boolean multiModule = false;
             for (Dependency d : dependencies) {
                 for (MavenProject projDependency : modules) {
                     if (projDependency != proj
@@ -60,8 +62,12 @@ public class ModuleUtils {
                             result.put(proj, l);
                         }
                         l.add(projDependency);
+                        multiModule = true;
                     }
                 }
+            }
+            if (!multiModule) {
+                result.put(proj, Arrays.asList(proj));
             }
         }
         return result;
