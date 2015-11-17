@@ -26,6 +26,7 @@ public class PluginMetadata {
     public String name;
     public String short_description;
     public String long_description;
+    public String readme;
     public String license;
     public List<Author> authors;
     public String category;

@@ -15,10 +15,15 @@
  */
 package org.gephi.maven;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.gephi.maven.json.Author;
@@ -85,6 +90,34 @@ public class MetadataUtils {
             Plugin plugin = (Plugin) iterator.next();
             if ("org.codehaus.mojo:nbm-maven-plugin".equalsIgnoreCase(plugin.getKey())) {
                 return plugin;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Lookup and return the content of the README.md file for this plugin.
+     *
+     * @param project project
+     * @param log log
+     * @return content of REDME.md file or null if not found
+     */
+    protected static String getReadme(MavenProject project, Log log) {
+        File readmePath = new File(project.getBasedir(), "README.md");
+        if (readmePath.exists()) {
+            log.debug("README.md file has been found: '" + readmePath.getAbsolutePath() + "'");
+            try {
+                StringBuilder builder = new StringBuilder();
+                LineNumberReader fileReader = new LineNumberReader(new FileReader(readmePath));
+                String line;
+                while ((line = fileReader.readLine()) != null) {
+                    builder.append(line);
+                    builder.append("\n");
+                }
+                log.info("File README.md with " + builder.length() + " characters has been attached to project '" + project.getName() + "'");
+                return builder.toString();
+            } catch (IOException ex) {
+                log.error("Error while reading README.md file", ex);
             }
         }
         return null;
