@@ -88,6 +88,7 @@ public class BuildMetadata extends AbstractMojo {
                 pm.authors = MetadataUtils.getAuthors(topPlugin);
                 pm.last_update = dateFormat.format(new Date());
                 pm.readme = MetadataUtils.getReadme(topPlugin, getLog());
+                pm.images = ScreenshotUtils.copyScreenshots(topPlugin, new File(outputDirectory, "imgs" + File.separator + pm.id), "imgs" + File.separator + pm.id + "/", getLog());
                 pluginMetadatas.add(pm);
             }
             pluginsMetadata.plugins = pluginMetadatas;
