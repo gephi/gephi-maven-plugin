@@ -22,8 +22,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -67,9 +65,25 @@ public class ModuleUtils {
                 }
             }
             if (!multiModule) {
-                result.put(proj, Arrays.asList(proj));
+                boolean dependsOn = false;
+                for (MavenProject p : modules) {
+                    if (p != proj) {
+                        List<Dependency> ds = p.getDependencies();
+                        for (Dependency d : ds) {
+                            if (proj.getArtifactId().equals(d.getArtifactId())
+                                    && proj.getGroupId().equals(d.getGroupId())
+                                    && proj.getVersion().equals(d.getVersion())) {
+                                dependsOn = true;
+                            }
+                        }
+                    }
+                }
+                if (!dependsOn) {
+                    result.put(proj, Arrays.asList(proj));
+                }
             }
         }
+
         return result;
     }
 
