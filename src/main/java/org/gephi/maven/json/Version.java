@@ -15,24 +15,8 @@
  */
 package org.gephi.maven.json;
 
-import java.util.List;
-import java.util.Map;
+public class Version {
 
-/**
- * Structure with the data needed to describe a plugin or suite of plugins.
- */
-public class PluginMetadata {
-
-    public String id;
-    public String name;
-    public String short_description;
-    public String long_description;
-    public String readme;
-    public String license;
-    public List<Author> authors;
-    public String category;
+    public String url;
     public String last_update;
-    public List<Image> images;
-    public Map<String, Version> versions;
-    public String sourcecode;
 }
