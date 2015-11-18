@@ -153,7 +153,7 @@ public class BuildMetadata extends AbstractMojo {
             for (Map.Entry<MavenProject, List<MavenProject>> entry : tree.entrySet()) {
                 MavenProject topPlugin = entry.getKey();
                 PluginMetadata pm = new PluginMetadata();
-                pm.id = topPlugin.getGroupId() + "." + topPlugin.getArtifactId();
+                pm.id = topPlugin.getArtifactId();
 
                 // Find previous
                 boolean foundPrevious = false;
