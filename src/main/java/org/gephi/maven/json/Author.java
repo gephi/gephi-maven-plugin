@@ -18,5 +18,6 @@ package org.gephi.maven.json;
 public class Author {
 
     public String name;
+    public String email;
     public String link;
 }

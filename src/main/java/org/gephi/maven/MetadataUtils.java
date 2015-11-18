@@ -20,6 +20,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.maven.model.Plugin;
@@ -64,14 +65,15 @@ public class MetadataUtils {
         if (nbmPlugin != null) {
             Xpp3Dom config = (Xpp3Dom) nbmPlugin.getConfiguration();
             if (config != null && config.getChild("author") != null) {
-                String authors = config.getChild("author").getValue();
-                List<Author> res = new ArrayList<Author>();
-                for (String a : authors.split(",")) {
-                    Author author = new Author();
-                    author.name = a.trim();
-                    res.add(author);
-                }
-                return res;
+                String authorName = config.getChild("author").getValue();
+                String authorEmail = config.getChild("authorEmail") != null ? config.getChild("authorEmail").getValue() : null;
+                String authorUrl = config.getChild("authorUrl") != null ? config.getChild("authorUrl").getValue() : null;
+                Author author = new Author();
+                author.name = authorName;
+                author.email = authorEmail;
+                author.link = authorUrl;
+
+                return Arrays.asList(new Author[]{author});
             }
         }
         return null;

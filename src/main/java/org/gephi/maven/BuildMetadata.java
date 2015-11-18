@@ -156,9 +156,11 @@ public class BuildMetadata extends AbstractMojo {
                 pm.id = topPlugin.getGroupId() + "." + topPlugin.getArtifactId();
 
                 // Find previous
+                boolean foundPrevious = false;
                 for (PluginMetadata oldPm : pluginsMetadata.plugins) {
                     if (oldPm.id.equals(pm.id)) {
                         pm = oldPm;
+                        foundPrevious = true;
                         getLog().debug("Found matching plugin id=" + pm.id + " in previous plugins.json");
                         break;
                     }
@@ -179,7 +181,9 @@ public class BuildMetadata extends AbstractMojo {
                 v.url = gephiVersion + "/" + ModuleUtils.getModuleDownloadPath(entry.getKey(), entry.getValue(), new File(outputDirectory, gephiVersion), getLog());
                 pm.versions.put(gephiVersion, v);
 
-                pluginsMetadata.plugins.add(pm);
+                if (!foundPrevious) {
+                    pluginsMetadata.plugins.add(pm);
+                }
             }
 
             String json = gson.toJson(pluginsMetadata);
