@@ -35,4 +35,5 @@ public class PluginMetadata {
     public List<Image> images;
     public Map<String, Version> versions;
     public String sourcecode;
+    public String homepage;
 }
