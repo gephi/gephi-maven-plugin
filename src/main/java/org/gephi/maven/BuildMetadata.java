@@ -26,7 +26,9 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.text.SimpleDateFormat;
@@ -119,9 +121,15 @@ public class BuildMetadata extends AbstractMojo {
             File pluginsJsonFile = new File(outputDirectory, "plugins.json");
             try {
                 URL url = new URL(metadataUrl + "plugins.json");
-                ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                URLConnection connection = url.openConnection();
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+                connection.connect();
+                InputStream stream = connection.getInputStream();
+                ReadableByteChannel rbc = Channels.newChannel(stream);
                 FileOutputStream fos = new FileOutputStream(pluginsJsonFile);
                 long read = fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                rbc.close();
+                stream.close();
                 getLog().debug("Read " + read + "bytes from url '" + url + "' and write to '" + pluginsJsonFile.getAbsolutePath() + "'");
             } catch (Exception e) {
                 throw new MojoExecutionException("Error while downloading previous 'plugins.json'", e);
