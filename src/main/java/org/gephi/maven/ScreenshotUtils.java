@@ -70,7 +70,8 @@ public class ScreenshotUtils {
                     throw new MojoExecutionException("Image file '" + file.getAbsolutePath() + "' contains spaces. Please rename image and try again");
                 }
                 // Read original file and copy to dest folder
-                File imageDestFile = new File(outputFolder, file.getName());
+                String fileName = file.getName().substring(0, file.getName().lastIndexOf(".")) + ".png";
+                File imageDestFile = new File(outputFolder, fileName);
                 try {
                     Thumbnails.of(file).
                             outputFormat("png").
