@@ -40,7 +40,7 @@ public class ManifestUtils {
     /**
      * List of allowed plugin categories
      */
-    private final static String CATEGORIES[] = new String[]{
+    protected final static String CATEGORIES[] = new String[]{
         "Layout", "Export", "Import", "Data Laboratory",
         "Filter", "Generator", "Metric", "Preview", "Tool",
         "Appearance", "Clustering", "Other Category"
@@ -94,8 +94,7 @@ public class ManifestUtils {
             throw new MojoExecutionException("The manifest.mf file for project '" + proj.getName() + "' should contain a 'OpenIDE-Module-Display-Category' entry");
         }
 
-        Set<String> allowedCategories = new HashSet<String>(Arrays.asList(CATEGORIES));
-        if (!allowedCategories.contains(brandingDisplayCategory)) {
+        if (!validateCategory(brandingDisplayCategory)) {
             throw new MojoExecutionException("The manifest entry 'OpenIDE-Module-Display-Category' should be one of the following values: " + Arrays.toString(CATEGORIES).replace("[", "").replace("]", ""));
         }
 
@@ -140,4 +139,8 @@ public class ManifestUtils {
         return manifest;
     }
 
+    protected static boolean validateCategory(String category) {
+        Set<String> allowedCategories = new HashSet<String>(Arrays.asList(CATEGORIES));
+        return allowedCategories.contains(category);
+    }
 }
