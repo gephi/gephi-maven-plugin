@@ -10,6 +10,8 @@ This plugin can help developers in the following way:
 
 - **Run** a testing version of Gephi with developed plugins pre-installed
 
+- **Generate** a skeleton plugin with the right folder structure and required configuration
+
 ## How it works
 
 This plugin is designed to work in a repository that has forked the `gephi-plugins` master branch. Such a repository typically contains a `modules` folder where plugins are located.
@@ -49,3 +51,9 @@ This command is automatically run when working on the `gephi-plugins` repository
 ### mvn org.gephi:gephi-maven-plugin:run
 
 This command runs a version of Gephi with the plugins pre-installed. This only works after the plugins have been built (i.e. by running `mvn package` on the repository).
+
+### mvn org.gephi:gephi-maven-plugin:generate
+
+This command is an interactive plugin generation tool. It asks a few questions through the console and then generates the plugin folder structure and configuration files.
+
+This tool only supports single module plugins at the moment. However, it's easy to extend into a suite by adding additional folders.
