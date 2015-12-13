@@ -6,13 +6,13 @@ This Maven plugin assists Gephi plugins developers and is designed to be used al
 
 This plugin can help developers in the following way:
 
-- **Validate** plugin against standard (e.g. check dependency version, configuration)
+- **Validate** plugin against standards (e.g. check dependency version, configuration)
 
 - **Run** a testing version of Gephi with developed plugins pre-installed
 
 ## How it works
 
-This plugin is designed to work in a repository that has forked the `gephi-plugins` master branch. Such a repository typically contains a `modules` folder where plugins should be located.
+This plugin is designed to work in a repository that has forked the `gephi-plugins` master branch. Such a repository typically contains a `modules` folder where plugins are located.
 
 Each Gephi plugin module can define dependencies to regular Java libraries, Netbeans modules and of course Gephi modules.
 
@@ -24,9 +24,9 @@ This is the simplest type of plugin and only contains a single module. It means 
 
 ### Suite
 
-A suite is defined by a collection of modules, which have dependencies between each other. A plugin can therefore be composed of multiple modules. Multiple NBM files are produced but the final suite will be archived into a single ZIP file.
+A suite is defined by a collection of modules, which have dependencies between each other. A plugin can therefore be composed of multiple modules. Multiple NBM files are produced but the final suite is archived into a single ZIP file.
 
-Suites however need to designate a module that acts as the module definition, which has the plugin metadata (e.g. license, author) and dependencies to the other modules. For instance, a plugin with 3 modules `A`, `B` and `C` could define `A` as the principal module and add `B` and `C` to the list of modules `A` depends on.
+Suites, however need to designate a module that acts as the module definition, which has the plugin metadata (e.g. license, author) and dependencies to the other modules. For instance, a plugin with 3 modules `A`, `B` and `C` could define `A` as the principal module and adds `B` and `C` to the list of modules it depends on.
 
 ## Goals
 
