@@ -146,7 +146,7 @@ public class Generate extends AbstractMojo {
         if (pluginFolder.exists()) {
             String response;
             do {
-                System.out.print("The plugin folder 'modules" + File.separator + folder + "' already exists, the configuration will be overriden, would you like to continue? (yes|no)");
+                System.out.print("The plugin folder 'modules" + File.separator + folder + "' already exists, the configuration will be overriden, would you like to continue? (yes|no): ");
             } while ((response = GenerateUtils.validateYesNoChoice(input.nextLine())) == null);
             if (response.matches("(?i)n|no")) {
                 getLog().warn("Process aborted, nothing has been done");
@@ -159,8 +159,12 @@ public class Generate extends AbstractMojo {
         //Close input
         input.close();
 
+        //Get sourcode
+        String sourceCodeUrl = MetadataUtils.getSourceCodeUrlFromGit(project, getLog());
+        getLog().debug("Obtained source code url from Git: " + sourceCodeUrl);
+
         //Create pom.xml
-        createTopPomFile(new File(pluginFolder, "pom.xml"), gephiVersion, org, artifact, version, branding, author, authorEmail, authorUrl, license);
+        createTopPomFile(new File(pluginFolder, "pom.xml"), gephiVersion, org, artifact, version, branding, author, authorEmail, authorUrl, license, sourceCodeUrl);
         getLog().debug("Created 'pom.xml' file at '" + pluginFolder.getAbsolutePath() + "'");
 
         //Readme
@@ -267,7 +271,7 @@ public class Generate extends AbstractMojo {
         }
     }
 
-    private void createTopPomFile(File file, String gephiVersion, String orgId, String artifactId, String version, String brandingName, String authorName, String authorEmail, String authorUrl, String licenseName) throws MojoExecutionException {
+    private void createTopPomFile(File file, String gephiVersion, String orgId, String artifactId, String version, String brandingName, String authorName, String authorEmail, String authorUrl, String licenseName, String sourceCodeUrl) throws MojoExecutionException {
         VelocityEngine ve = GenerateUtils.initVelocity();
         Template t = ve.getTemplate("org/gephi/maven/templates/top-plugin-pom.xml", "UTF-8");
 
@@ -281,6 +285,8 @@ public class Generate extends AbstractMojo {
         context.put("author_name", authorName);
         context.put("author_email", authorEmail);
         context.put("author_url", authorUrl);
+        context.put("sourcecode_url", sourceCodeUrl);
+        context.put("homepage_url", "");
 
         try {
             FileWriter writer = new FileWriter(file);

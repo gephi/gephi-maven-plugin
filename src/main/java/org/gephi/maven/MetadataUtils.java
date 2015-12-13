@@ -146,61 +146,80 @@ public class MetadataUtils {
     }
 
     /**
-     * Use SCM configuration or local Git repository configuration to lookup the
-     * sourcecode URL.
+     * Lookup source code configuration or default to SCM.
      *
      * @param project project
      * @param log log
      * @return source code url or null
      */
     protected static String getSourceCode(MavenProject project, Log log) {
+        Plugin nbmPlugin = lookupNbmPlugin(project);
+        if (nbmPlugin != null) {
+            Xpp3Dom config = (Xpp3Dom) nbmPlugin.getConfiguration();
+            if (config != null && config.getChild("sourceCodeUrl") != null) {
+                return config.getChild("sourceCodeUrl").getValue();
+            }
+        }
+
         Scm scm = project.getScm();
         if (scm != null && scm.getUrl() != null && !scm.getUrl().isEmpty()) {
             log.debug("SCM configuration found, with url = '" + scm.getUrl() + "'");
             return scm.getUrl();
         } else {
-            File gitPath = new File(project.getBasedir(), ".git");
-            if (gitPath.exists() && gitPath.isDirectory()) {
-                File gitPathConfig = new File(gitPath, "config");
-                if (gitPathConfig.exists() && gitPathConfig.isFile()) {
-                    log.debug("Git config gile located at '" + gitPathConfig.getAbsolutePath() + "'");
-                    try {
-                        BufferedReader fileReader = new BufferedReader(new FileReader(gitPathConfig));
 
-                        Pattern pattern = Pattern.compile("\\s*url = (.*)");
-                        String line, url = null;
-                        while ((line = fileReader.readLine()) != null) {
-                            Matcher m = pattern.matcher(line);
-                            if (m.matches()) {
-                                url = m.group(1);
-                                break;
-                            }
-                        }
-                        fileReader.close();
+        }
+        return null;
+    }
 
-                        if (url != null) {
-                            log.debug("URL found in .git/config: '" + url + "'");
-                            if (url.startsWith("http://")) {
-                                return url;
-                            } else if (url.startsWith("git@")) {
-                                Pattern gitPattern = Pattern.compile("git@([^:]*):([^.]*).git");
-                                Matcher gitMatcher = gitPattern.matcher(url);
-                                if (gitMatcher.matches()) {
-                                    String res = "http://" + gitMatcher.group(1) + "/" + gitMatcher.group(2);
-                                    log.debug("Rewrote URL to '" + res + "'");
-                                    return res;
-                                }
-                            } else {
-                                log.debug("Couldn't find a pattern in the git URL: " + url);
-                            }
+    /**
+     * Use local Git repository configuration to lookup the sourcecode URL.
+     *
+     * @param project project
+     * @param log log
+     * @return source code url or null
+     */
+    protected static String getSourceCodeUrlFromGit(MavenProject project, Log log) {
+        File gitPath = new File(project.getBasedir(), ".git");
+        if (gitPath.exists() && gitPath.isDirectory()) {
+            File gitPathConfig = new File(gitPath, "config");
+            if (gitPathConfig.exists() && gitPathConfig.isFile()) {
+                log.debug("Git config gile located at '" + gitPathConfig.getAbsolutePath() + "'");
+                try {
+                    BufferedReader fileReader = new BufferedReader(new FileReader(gitPathConfig));
+
+                    Pattern pattern = Pattern.compile("\\s*url = (.*)");
+                    String line, url = null;
+                    while ((line = fileReader.readLine()) != null) {
+                        Matcher m = pattern.matcher(line);
+                        if (m.matches()) {
+                            url = m.group(1);
+                            break;
                         }
-                    } catch (IOException e) {
-                        log.error("Error while reading Git config", e);
                     }
+                    fileReader.close();
+
+                    if (url != null) {
+                        log.debug("URL found in .git/config: '" + url + "'");
+                        if (url.startsWith("http://")) {
+                            return url;
+                        } else if (url.startsWith("git@")) {
+                            Pattern gitPattern = Pattern.compile("git@([^:]*):([^.]*).git");
+                            Matcher gitMatcher = gitPattern.matcher(url);
+                            if (gitMatcher.matches()) {
+                                String res = "http://" + gitMatcher.group(1) + "/" + gitMatcher.group(2);
+                                log.debug("Rewrote URL to '" + res + "'");
+                                return res;
+                            }
+                        } else {
+                            log.debug("Couldn't find a pattern in the git URL: " + url);
+                        }
+                    }
+                } catch (IOException e) {
+                    log.error("Error while reading Git config", e);
                 }
-            } else {
-                log.debug("The .git folder couldn't be found at '" + gitPath.getAbsolutePath() + "'");
             }
+        } else {
+            log.debug("The .git folder couldn't be found at '" + gitPath.getAbsolutePath() + "'");
         }
         return null;
     }
