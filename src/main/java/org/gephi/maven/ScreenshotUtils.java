@@ -84,7 +84,7 @@ public class ScreenshotUtils {
                 }
 
                 Image image = new Image();
-                image.image = urlPrefix + file.getName();
+                image.image = urlPrefix + fileName;
                 images.add(image);
 
                 // Thumbnail path
