@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module-Name: $branding_name
+OpenIDE-Module-Short-Description: $short_description
+OpenIDE-Module-Long-Description: $long_description
+OpenIDE-Module-Display-Category: $category

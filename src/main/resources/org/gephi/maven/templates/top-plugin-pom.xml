@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>gephi-plugin-parent</artifactId>
+        <groupId>org.gephi</groupId>
+        <version>$gephi_version</version>
+    </parent>
+
+    <groupId>$org_id</groupId>
+    <artifactId>$artifact_id</artifactId>
+    <version>$version</version>
+    <packaging>nbm</packaging>
+
+    <name>$branding_name</name>
+
+    <dependencies>
+        <!-- Insert dependencies here -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>nbm-maven-plugin</artifactId>
+                <configuration>
+                    <licenseName>$license_name</licenseName>
+                    <!--<licenseFile></licenseFile>-->
+                    <author>$author_name</author>
+#if( $author_email )
+                    <authorEmail>$author_email</authorEmail>
+#end
+#if( $author_url )
+                    <authorUrl>$author_url</authorUrl>
+#end
+                    <publicPackages>
+                        <!-- Insert public packages -->
+                    </publicPackages>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
