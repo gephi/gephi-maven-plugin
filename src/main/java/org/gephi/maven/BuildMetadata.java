@@ -181,6 +181,7 @@ public class BuildMetadata extends AbstractMojo {
                 pm.readme = MetadataUtils.getReadme(topPlugin, getLog());
                 pm.images = ScreenshotUtils.copyScreenshots(topPlugin, new File(outputDirectory, "imgs" + File.separator + pm.id), "imgs" + File.separator + pm.id + "/", getLog());
                 pm.homepage = MetadataUtils.getHomepage(project);
+                pm.sourcecode = MetadataUtils.getSourceCode(project, getLog());
 
                 if (pm.versions == null) {
                     pm.versions = new HashMap<String, Version>();
