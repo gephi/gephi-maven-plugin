@@ -1,5 +1,16 @@
 Manifest-Version: 1.0
+#if( $branding_name )
 OpenIDE-Module-Name: $branding_name
+#end
+#if( $description )
 OpenIDE-Module-Short-Description: $short_description
+#end
+#if( $description )
 OpenIDE-Module-Long-Description: $long_description
+#end
+#if( $category )
 OpenIDE-Module-Display-Category: $category
+#end
+#if( $localizing_bundle )
+OpenIDE-Module-Localizing-Bundle: $localizing_bundle
+#end

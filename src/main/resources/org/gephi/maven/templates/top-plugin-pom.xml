@@ -24,8 +24,12 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>nbm-maven-plugin</artifactId>
                 <configuration>
+#if( $license_name )
                     <licenseName>$license_name</licenseName>
-                    <!--<licenseFile></licenseFile>-->
+#end
+#if( $license_file )
+                    <licenseFile>$license_file</licenseFile>
+#end
                     <author>$author_name</author>
 #if( $author_email )
                     <authorEmail>$author_email</authorEmail>

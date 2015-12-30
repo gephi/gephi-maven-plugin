@@ -57,3 +57,7 @@ This command runs a version of Gephi with the plugins pre-installed. This only w
 This command is an interactive plugin generation tool. It asks a few questions through the console and then generates the plugin folder structure and configuration files.
 
 This tool only supports single module plugins at the moment. However, it's easy to extend into a suite by adding additional folders.
+
+### mvn org.gephi:gephi-maven-plugin:migrate
+
+This command is custom-built to migrate ant-based plugins to Maven and takes care of copying configuration, sources and resources files. It looks for ant-based plugin folders in the current directory and creates the appropriate plugin folders in `modules`.

@@ -15,22 +15,16 @@
  */
 package org.gephi.maven;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 
 /**
  * Generate new plugin.
@@ -153,7 +147,7 @@ public class Generate extends AbstractMojo {
                 return;
             }
         } else {
-            createFolder(new File(baseDir, "modules" + File.separator + folder), getLog());
+            GenerateUtils.createFolder(new File(baseDir, "modules" + File.separator + folder), getLog());
         }
 
         //Close input
@@ -164,7 +158,7 @@ public class Generate extends AbstractMojo {
         getLog().debug("Obtained source code url from Git: " + sourceCodeUrl);
 
         //Create pom.xml
-        createTopPomFile(new File(pluginFolder, "pom.xml"), gephiVersion, org, artifact, version, branding, author, authorEmail, authorUrl, license, sourceCodeUrl);
+        GenerateUtils.createTopPomFile(new File(pluginFolder, "pom.xml"), gephiVersion, org, artifact, version, branding, author, authorEmail, authorUrl, license, null, sourceCodeUrl, null);
         getLog().debug("Created 'pom.xml' file at '" + pluginFolder.getAbsolutePath() + "'");
 
         //Readme
@@ -174,20 +168,20 @@ public class Generate extends AbstractMojo {
         }
 
         //Create nbm, java and resources in src/main folder
-        File srcMain = createFolder(new File(pluginFolder, "src" + File.separator + "main"), getLog());
-        File nbmFolder = createFolder(new File(srcMain, "nbm"), getLog());
-        createFolder(new File(srcMain, "java"), getLog());
-        createFolder(new File(srcMain, "resources"), getLog());
+        File srcMain = GenerateUtils.createFolder(new File(pluginFolder, "src" + File.separator + "main"), getLog());
+        File nbmFolder = GenerateUtils.createFolder(new File(srcMain, "nbm"), getLog());
+        GenerateUtils.createFolder(new File(srcMain, "java"), getLog());
+        GenerateUtils.createFolder(new File(srcMain, "resources"), getLog());
 
         //Create manifest
-        createManifest(new File(nbmFolder, "manifest.mf"), branding, shortDescription, longDescription, category);
+        GenerateUtils.createManifest(new File(nbmFolder, "manifest.mf"), branding, shortDescription, longDescription, category);
         getLog().debug("Created 'manifest.mf' file at '" + nbmFolder.getAbsolutePath() + "'");
 
         //Create img folder
-        createFolder(new File(pluginFolder, "src" + File.separator + "img"), getLog());
+        GenerateUtils.createFolder(new File(pluginFolder, "src" + File.separator + "img"), getLog());
 
         //Add module to pom
-        addModuleToPom(pomFile, folder);
+        GenerateUtils.addModuleToPom(pomFile, folder, getLog());
         getLog().debug("Inserted '" + folder + "' into the list of modules in 'pom.xml'");
 
         //Info
@@ -196,41 +190,6 @@ public class Generate extends AbstractMojo {
                 + "  - modules" + File.separator + folder + File.separator + "pom.xml: Organization, version, name, author, license\n"
                 + "  - modules" + File.separator + folder + File.separator + "src" + File.separator + "main" + File.separator + "nbm: Branding name, short description, long description, category");
         getLog().info("Finished.");
-    }
-
-    private static File createFolder(File folder, Log log) {
-        if (folder.mkdirs()) {
-            log.debug("Created folder at '" + folder.getAbsolutePath() + "'");
-        }
-        return folder;
-    }
-
-    private void addModuleToPom(File pomFile, String moduleName) throws MojoExecutionException {
-        try {
-            StringBuilder fileContent = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new FileReader(pomFile));
-            String toAdd = "        <module>modules/" + moduleName + "</module>";
-            String line;
-            boolean skip = false;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains(toAdd)) {
-                    getLog().debug("Found the module path, skipping to avoid duplicate");
-                    skip = true;
-                }
-                if (!skip && line.contains("</modules>")) {
-                    fileContent.append(toAdd).append("\n");
-                    getLog().debug("Found '</modules>' string, inserting module path");
-                }
-                fileContent.append(line).append("\n");
-            }
-            reader.close();
-
-            FileWriter writer = new FileWriter(pomFile);
-            writer.append(fileContent.toString());
-            writer.close();
-        } catch (IOException ex) {
-            throw new MojoExecutionException("Error while reading/writing 'pom.xml' at '" + pomFile.getAbsolutePath() + "'", ex);
-        }
     }
 
     private void createReadme(File folder, String brandingName) throws MojoExecutionException {
@@ -249,51 +208,6 @@ public class Generate extends AbstractMojo {
                 }
             } catch (IOException ex) {
             }
-        }
-    }
-
-    private void createManifest(File file, String branding, String shortDescription, String longDescription, String category) throws MojoExecutionException {
-        VelocityEngine ve = GenerateUtils.initVelocity();
-        Template t = ve.getTemplate("org/gephi/maven/templates/plugin-manifest.mf", "UTF-8");
-
-        VelocityContext context = new VelocityContext();
-        context.put("branding_name", branding);
-        context.put("short_description", shortDescription);
-        context.put("long_description", longDescription);
-        context.put("category", category);
-
-        try {
-            FileWriter writer = new FileWriter(file);
-            t.merge(context, writer);
-            writer.close();
-        } catch (IOException e) {
-            throw new MojoExecutionException("Error writing manifest.mf file", e);
-        }
-    }
-
-    private void createTopPomFile(File file, String gephiVersion, String orgId, String artifactId, String version, String brandingName, String authorName, String authorEmail, String authorUrl, String licenseName, String sourceCodeUrl) throws MojoExecutionException {
-        VelocityEngine ve = GenerateUtils.initVelocity();
-        Template t = ve.getTemplate("org/gephi/maven/templates/top-plugin-pom.xml", "UTF-8");
-
-        VelocityContext context = new VelocityContext();
-        context.put("gephi_version", gephiVersion);
-        context.put("org_id", orgId);
-        context.put("artifact_id", artifactId);
-        context.put("version", version);
-        context.put("branding_name", brandingName);
-        context.put("license_name", licenseName);
-        context.put("author_name", authorName);
-        context.put("author_email", authorEmail);
-        context.put("author_url", authorUrl);
-        context.put("sourcecode_url", sourceCodeUrl);
-        context.put("homepage_url", "");
-
-        try {
-            FileWriter writer = new FileWriter(file);
-            t.merge(context, writer);
-            writer.close();
-        } catch (IOException e) {
-            throw new MojoExecutionException("Error writing pom.xml file", e);
         }
     }
 }

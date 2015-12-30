@@ -18,11 +18,13 @@ package org.gephi.maven;
 import org.gephi.maven.json.PluginMetadata;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -80,6 +82,39 @@ public class ManifestUtils {
         String brandingShortDescription = mainSection.getAttributeValue("OpenIDE-Module-Short-Description");
         String brandingLongDescrption = mainSection.getAttributeValue("OpenIDE-Module-Long-Description");
         String brandingDisplayCategory = mainSection.getAttributeValue("OpenIDE-Module-Display-Category");
+
+        //Read localized
+        if (mainSection.getAttribute("OpenIDE-Module-Localizing-Bundle") != null) {
+            File folder = proj.getBasedir();
+            String path = mainSection.getAttributeValue("OpenIDE-Module-Localizing-Bundle");
+            File bundlerFile = new File(folder, "src" + File.separator + "main" + File.separator + "resources");
+            if (!bundlerFile.exists()) {
+                throw new MojoExecutionException("The 'src/main/resources' folder can't be found in '" + folder.getAbsolutePath() + "'");
+            }
+            bundlerFile = new File(bundlerFile, path.replace('/', File.separatorChar));
+            if (!bundlerFile.exists()) {
+                throw new MojoExecutionException("The '" + path + "' file can't be found");
+            }
+            Properties prop = new Properties();
+            FileReader bundleReader = null;
+            try {
+                bundleReader = new FileReader(bundlerFile);
+                prop.load(bundleReader);
+                brandingName = prop.getProperty("OpenIDE-Module-Name", brandingName);
+                brandingDisplayCategory = prop.getProperty("OpenIDE-Module-Display-Category", brandingDisplayCategory);
+                brandingShortDescription = prop.getProperty("OpenIDE-Module-Short-Description", brandingShortDescription);
+                brandingLongDescrption = prop.getProperty("OpenIDE-Module-Long-Description", brandingLongDescrption);
+            } catch (IOException e) {
+                throw new MojoExecutionException("Error while reading '" + bundlerFile.getAbsolutePath() + "'", e);
+            } finally {
+                if (bundleReader != null) {
+                    try {
+                        bundleReader.close();
+                    } catch (IOException ex) {
+                    }
+                }
+            }
+        }
 
         if (brandingName == null || brandingName.isEmpty()) {
             throw new MojoExecutionException("The manifest.mf file for project '" + proj.getName() + "' should contain a 'OpenIDE-Module-Name' entry");
