@@ -185,6 +185,11 @@ public class Migrate extends AbstractMojo {
                 }
             }
 
+            //Author
+            if (metadata.author == null) {
+                metadata.author = "Unknown";
+            }
+
             //Create pom.xml
             File modulePomFile = new File(pluginFolder, "pom.xml");
             GenerateUtils.createTopPomFile(modulePomFile, gephiVersion, org, artifact, "1.0.0", folder, metadata.author, null, null, license, licenseFile, sourceCodeUrl, metadata.homepageUrl);

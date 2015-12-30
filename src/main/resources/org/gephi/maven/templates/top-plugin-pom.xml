@@ -38,7 +38,9 @@
                     <authorUrl>$author_url</authorUrl>
 #end
                     <sourceCodeUrl>$sourcecode_url</sourceCodeUrl>
+#if( $homepage_url )
                     <homePageUrl>$homepage_url</homePageUrl>
+#end
                     <publicPackages>
                         <!-- Insert public packages -->
                     </publicPackages>
