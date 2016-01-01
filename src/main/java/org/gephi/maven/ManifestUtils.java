@@ -130,7 +130,7 @@ public class ManifestUtils {
         }
 
         if (!validateCategory(brandingDisplayCategory)) {
-            throw new MojoExecutionException("The manifest entry 'OpenIDE-Module-Display-Category' should be one of the following values: " + Arrays.toString(CATEGORIES).replace("[", "").replace("]", ""));
+            throw new MojoExecutionException("The manifest entry 'OpenIDE-Module-Display-Category' is '"+brandingDisplayCategory+"' but should be one of the following values: " + Arrays.toString(CATEGORIES).replace("[", "").replace("]", ""));
         }
 
         metadata.name = brandingName;
