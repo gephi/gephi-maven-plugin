@@ -58,6 +58,14 @@ public class Run extends AbstractMojo {
     private List<String> clusters;
 
     /**
+     * Attach a debugger to the application JVM. That string will be appended as
+     * additional arguments allowing you to configure arbitrary debug-ability
+     * options.
+     */
+    @Parameter(property = "run.params.debug")
+    protected String debugAdditionalArguments;
+
+    /**
      * Output directory where the the Gephi application is created.
      */
     @Parameter(required = true, defaultValue = "${project.build.directory}/gephi")
@@ -131,6 +139,7 @@ public class Run extends AbstractMojo {
             }
 
             cmdLine.addArguments(args.toArray(new String[0]));
+            cmdLine.addArguments(CommandLineUtils.translateCommandline(getDebugAdditionalArguments()));
 
             getLog().info("Executing: " + cmdLine.toString());
             StreamConsumer out = new StreamConsumer() {
@@ -144,6 +153,8 @@ public class Run extends AbstractMojo {
         } catch (IOException e) {
             throw new MojoExecutionException("Failed executing Gephi", e);
         } catch (CommandLineException e) {
+            throw new MojoExecutionException("Failed executing Gephi", e);
+        } catch (Exception e) {
             throw new MojoExecutionException("Failed executing Gephi", e);
         }
     }
@@ -175,5 +186,9 @@ public class Run extends AbstractMojo {
         writer.close();
         file.delete();
         newFile.renameTo(file);
+    }
+
+    private String getDebugAdditionalArguments() {
+        return debugAdditionalArguments;
     }
 }
