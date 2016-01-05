@@ -52,6 +52,8 @@ This command is automatically run when working on the `gephi-plugins` repository
 
 This command runs a version of Gephi with the plugins pre-installed. This only works after the plugins have been built (i.e. by running `mvn package` on the repository).
 
+The command accepts a `run.params.debug` parameter that allows to run Gephi with debug flags. The value string is directly passed as parameters to the application.
+
 ### mvn org.gephi:gephi-maven-plugin:generate
 
 This command is an interactive plugin generation tool. It asks a few questions through the console and then generates the plugin folder structure and configuration files.
