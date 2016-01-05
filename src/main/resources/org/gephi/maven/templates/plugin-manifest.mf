@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 #if( $branding_name )
 OpenIDE-Module-Name: $branding_name
 #end
-#if( $description )
+#if( $short_description )
 OpenIDE-Module-Short-Description: $short_description
 #end
-#if( $description )
+#if( $long_description )
 OpenIDE-Module-Long-Description: $long_description
 #end
 #if( $category )
