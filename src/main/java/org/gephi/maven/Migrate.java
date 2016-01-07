@@ -229,6 +229,26 @@ public class Migrate extends AbstractMojo {
                 getLog().warn("The 'src' folder at '" + srcFolder.getAbsolutePath() + "' doesn't exists");
             }
 
+            //Copy test code
+            File testFolder = new File(folder, "test");
+            if (testFolder.exists()) {
+                if (new File(testFolder, "unit" + File.separator + "src").exists()) {
+                    testFolder = new File(testFolder, "unit" + File.separator + "src");
+                }
+                File srcTest = GenerateUtils.createFolder(new File(pluginFolder, "src" + File.separator + "test"), getLog());
+                File testJavaFolder = new File(srcTest, "java");
+                File testResourcesFolder = new File(srcTest, "resources");
+                try {
+                    String[] pattern = new String[]{"**\\*.java", "**\\*.form"};
+                    copyFiles(testFolder, testJavaFolder, pattern, null);
+                    getLog().debug("Copied test source folders to '" + testJavaFolder.getAbsolutePath() + "'");
+                    copyFiles(testFolder, testResourcesFolder, null, pattern);
+                    getLog().debug("Copied test resources folders to '" + testResourcesFolder.getAbsolutePath() + "'");
+                } catch (IOException e) {
+                    throw new MojoExecutionException("Error while copying test source files", e);
+                }
+            }
+
             //Manifest
             if (metadata.category == null) {
                 metadata.category = "Other Category";
