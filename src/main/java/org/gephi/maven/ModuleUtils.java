@@ -18,7 +18,6 @@ package org.gephi.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,13 @@ public class ModuleUtils {
         for (MavenProject proj : modules) {
             List<Dependency> dependencies = proj.getDependencies();
             log.debug("Investigating the " + dependencies.size() + " dependencies of project '" + proj.getName() + "'");
-            boolean multiModule = false;
+
+            // Init
+            List<MavenProject> deps = new ArrayList<MavenProject>();
+            deps.add(proj);
+            result.put(proj, deps);
+
+            // Add all module-based dependencies
             for (Dependency d : dependencies) {
                 for (MavenProject projDependency : modules) {
                     if (projDependency != proj
@@ -53,35 +58,28 @@ public class ModuleUtils {
                             && projDependency.getGroupId().equals(d.getGroupId())
                             && projDependency.getVersion().equals(d.getVersion())) {
                         log.debug("Found a dependency that matches another module '" + proj.getName() + "' -> '" + projDependency.getName() + "'");
-                        List<MavenProject> l = result.get(proj);
-                        if (l == null) {
-                            l = new ArrayList<MavenProject>();
-                            l.add(proj);
-                            result.put(proj, l);
-                        }
-                        l.add(projDependency);
-                        multiModule = true;
+                        deps.add(projDependency);
                     }
                 }
             }
-            if (!multiModule) {
-                boolean dependsOn = false;
-                for (MavenProject p : modules) {
-                    if (p != proj) {
-                        List<Dependency> ds = p.getDependencies();
-                        for (Dependency d : ds) {
-                            if (proj.getArtifactId().equals(d.getArtifactId())
-                                    && proj.getGroupId().equals(d.getGroupId())
-                                    && proj.getVersion().equals(d.getVersion())) {
-                                dependsOn = true;
-                            }
-                        }
+        }
+
+        // Remove modules that are entirely dependencies of others
+        List<MavenProject> toBeRemoved = new ArrayList<MavenProject>();
+        for (MavenProject proj : modules) {
+            List<MavenProject> projDeps = result.get(proj);
+            for (MavenProject proj2 : modules) {
+                if (proj != proj2) {
+                    if (result.get(proj2).containsAll(projDeps)) {
+                        log.debug("Remove '" + proj.getName() + "' from list of top modules because is a dependency of '" + proj2.getName() + "'");
+                        toBeRemoved.add(proj);
+                        break;
                     }
                 }
-                if (!dependsOn) {
-                    result.put(proj, Arrays.asList(proj));
-                }
             }
+        }
+        for (MavenProject mp : toBeRemoved) {
+            result.remove(mp);
         }
 
         return result;
