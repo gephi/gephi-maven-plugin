@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -80,7 +81,7 @@ public class BuildMetadata extends AbstractMojo {
     /**
      * Data format for <em>lastUpdated</em> field.
      */
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMMMM d, yyyy");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMMMM d, yyyy", Locale.ENGLISH);
 
     /**
      * Metadata url.
@@ -179,7 +180,7 @@ public class BuildMetadata extends AbstractMojo {
                 pm.authors = MetadataUtils.getAuthors(topPlugin);
                 pm.last_update = dateFormat.format(new Date());
                 pm.readme = MetadataUtils.getReadme(topPlugin, getLog());
-                pm.images = ScreenshotUtils.copyScreenshots(topPlugin, new File(outputDirectory, "imgs" + File.separator + pm.id), "imgs" + File.separator + pm.id + "/", getLog());
+                pm.images = ScreenshotUtils.copyScreenshots(topPlugin, new File(outputDirectory, "imgs" + File.separator + pm.id), "imgs" + "/" + pm.id + "/", getLog());
                 pm.homepage = MetadataUtils.getHomepage(topPlugin);
                 pm.sourcecode = MetadataUtils.getSourceCode(topPlugin, getLog());
 
