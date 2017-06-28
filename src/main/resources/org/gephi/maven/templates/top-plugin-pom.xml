@@ -37,7 +37,9 @@
 #if( $author_url )
                     <authorUrl>$author_url</authorUrl>
 #end
+#if( $sourcecode_url )
                     <sourceCodeUrl>$sourcecode_url</sourceCodeUrl>
+#end
 #if( $homepage_url )
                     <homePageUrl>$homepage_url</homePageUrl>
 #end
