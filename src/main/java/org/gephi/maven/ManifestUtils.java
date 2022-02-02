@@ -15,6 +15,7 @@
  */
 package org.gephi.maven;
 
+import org.apache.netbeans.nbm.utils.ExamineManifest;
 import org.gephi.maven.json.PluginMetadata;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,7 +31,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.tools.ant.taskdefs.Manifest;
 import org.apache.tools.ant.taskdefs.ManifestException;
-import org.codehaus.mojo.nbm.utils.ExamineManifest;
 import org.codehaus.plexus.util.IOUtil;
 import org.apache.maven.plugin.logging.Log;
 
