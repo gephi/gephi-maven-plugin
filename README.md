@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/gephi/gephi-maven-plugin.svg?branch=master)](https://travis-ci.org/gephi/gephi-maven-plugin)
 
+[![build](https://github.com/gephi/gephi-maven-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/gephi/gephi-maven-plugin/actions/workflows/build.yml)
+
 This Maven plugin assists Gephi plugins developers and is designed to be used along with the [gephi-plugins](https://github.com/gephi/gephi-plugins) repository and its instructions.
 
 This plugin can help developers in the following way:
