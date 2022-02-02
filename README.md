@@ -1,6 +1,7 @@
 # Gephi Maven Plugin
 
 [![build](https://github.com/gephi/gephi-maven-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/gephi/gephi-maven-plugin/actions/workflows/build.yml)
+[![javadoc](https://javadoc.io/badge2/org.gephi/gephi-maven-plugin/javadoc.svg)](https://javadoc.io/doc/org.gephi/gephi-maven-plugin)
 
 This Maven plugin assists Gephi plugins developers and is designed to be used along with the [gephi-plugins](https://github.com/gephi/gephi-plugins) repository and its instructions.
 
@@ -11,6 +12,12 @@ This plugin can help developers in the following way:
 - **Run** a testing version of Gephi with developed plugins pre-installed
 
 - **Generate** a skeleton plugin with the right folder structure and required configuration
+
+## Download
+
+Stable releases can be found on [Maven central](https://search.maven.org/artifact/org.gephi/gephi-maven-plugin).
+
+Development builds can be found on [Sonatype's Snapshot Repository](https://oss.sonatype.org/content/repositories/snapshots/org/gephi/gephi-maven-plugin/).
 
 ## How it works
 
