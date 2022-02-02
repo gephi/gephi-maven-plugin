@@ -168,7 +168,7 @@ public class GenerateUtils {
     protected static String validateVersion(String val) {
         if (val != null) {
             if (!val.matches("[0-9]+\\.[0-9]+\\.[0-9]+")) {
-                System.err.println("The version should match the semantic verisonning scheme: MAJOR.MINOR.PATCH (e.g. 1.0.1)");
+                System.err.println("The version should match the semantic versioning scheme: MAJOR.MINOR.PATCH (e.g. 1.0.1)");
             } else {
                 return val;
             }

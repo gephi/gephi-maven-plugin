@@ -42,7 +42,7 @@ public class ManifestUtils {
     /**
      * List of allowed plugin categories
      */
-    protected final static String CATEGORIES[] = new String[]{
+    protected final static String[] CATEGORIES = new String[]{
         "Layout", "Export", "Import", "Data Laboratory",
         "Filter", "Generator", "Metric", "Preview", "Tool",
         "Appearance", "Clustering", "Other Category"
