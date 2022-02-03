@@ -110,7 +110,7 @@ public class MetadataUtils {
 
         for (Iterator iterator = plugins.iterator(); iterator.hasNext();) {
             Plugin plugin = (Plugin) iterator.next();
-            if ("org.codehaus.mojo:nbm-maven-plugin".equalsIgnoreCase(plugin.getKey())) {
+            if ("org.apache.netbeans.utilities:nbm-maven-plugin".equalsIgnoreCase(plugin.getKey())) {
                 return plugin;
             }
         }
@@ -200,13 +200,13 @@ public class MetadataUtils {
 
                     if (url != null) {
                         log.debug("URL found in .git/config: '" + url + "'");
-                        if (url.startsWith("http://")) {
+                        if (url.startsWith("http://") || url.startsWith("https://")) {
                             return url;
                         } else if (url.startsWith("git@")) {
                             Pattern gitPattern = Pattern.compile("git@([^:]*):([^.]*).git");
                             Matcher gitMatcher = gitPattern.matcher(url);
                             if (gitMatcher.matches()) {
-                                String res = "http://" + gitMatcher.group(1) + "/" + gitMatcher.group(2);
+                                String res = "https://" + gitMatcher.group(1) + "/" + gitMatcher.group(2);
                                 log.debug("Rewrote URL to '" + res + "'");
                                 return res;
                             }
