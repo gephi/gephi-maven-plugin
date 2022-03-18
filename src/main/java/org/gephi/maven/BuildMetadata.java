@@ -131,7 +131,7 @@ public class BuildMetadata extends AbstractMojo {
                 long read = fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
                 rbc.close();
                 stream.close();
-                getLog().debug("Read " + read + "bytes from url '" + url + "' and write to '" + pluginsJsonFile.getAbsolutePath() + "'");
+                getLog().debug("Read " + read + " bytes from url '" + url + "' and write to '" + pluginsJsonFile.getAbsolutePath() + "'");
             } catch (Exception e) {
                 throw new MojoExecutionException("Error while downloading previous 'plugins.json'", e);
             }
