@@ -17,6 +17,15 @@ This plugin can help developers in the following way:
 
 Stable releases can be found on [Maven central](https://search.maven.org/artifact/org.gephi/gephi-maven-plugin).
 
+Maven:
+```
+<plugin>
+    <groupId>org.gephi</groupId>
+    <artifactId>gephi-maven-plugin</artifactId>
+    <version>1.2.5</version>
+</plugin>
+```
+
 Development builds can be found on [Sonatype's Snapshot Repository](https://oss.sonatype.org/content/repositories/snapshots/org/gephi/gephi-maven-plugin/).
 
 ## How it works
