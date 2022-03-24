@@ -22,7 +22,7 @@ Maven:
 <plugin>
     <groupId>org.gephi</groupId>
     <artifactId>gephi-maven-plugin</artifactId>
-    <version>1.2.5</version>
+    <version>1.2.6</version>
 </plugin>
 ```
 
