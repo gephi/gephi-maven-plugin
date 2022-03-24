@@ -4,7 +4,7 @@
  
     <groupId>org.gephi</groupId>
     <artifactId>gephi-maven-plugin</artifactId>
-    <version>1.2.6</version>
+    <version>1.2.7-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
  
     <name>Gephi Maven Plugin</name>
