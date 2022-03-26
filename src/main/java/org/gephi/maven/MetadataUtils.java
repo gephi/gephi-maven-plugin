@@ -27,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Scm;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -222,5 +223,21 @@ public class MetadataUtils {
             log.debug("The .git folder couldn't be found at '" + gitPath.getAbsolutePath() + "'");
         }
         return null;
+    }
+
+    /**
+     * Transforms a standard Maven version into just the minor version.
+     * @param gephiVersion a gephi version
+     * @return version in format <code>major.minor</code>
+     * @throws MojoExecutionException if the parsing fails
+     */
+    protected static String getMinorVersion(String gephiVersion) throws MojoExecutionException {
+        try {
+            boolean snapshot = gephiVersion.endsWith("-SNAPSHOT");
+            String[] versions = gephiVersion.split("\\.");
+            return versions[0] + "." + versions[1] + (snapshot ? "-SNAPSHOT" : "");
+        } catch(Exception e) {
+            throw new MojoExecutionException("Error while parsing the 'gephi.version'", e);
+        }
     }
 }

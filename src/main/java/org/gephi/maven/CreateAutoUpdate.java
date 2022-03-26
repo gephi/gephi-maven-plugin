@@ -65,7 +65,7 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
         if (gephiVersion == null) {
             throw new MojoExecutionException("The 'gephi.version' property should be defined");
         }
-        String gephiMinorVersion = getMinorVersion(gephiVersion);
+        String gephiMinorVersion = MetadataUtils.getMinorVersion(gephiVersion);
 
         File outputFolder = new File(outputDirectory, gephiMinorVersion);
         if (outputFolder.mkdirs()) {
@@ -85,7 +85,7 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                             if (gephiVersionModule == null) {
                                 throw new MojoExecutionException("The 'gephi.version' property should be defined in project '" + proj.getName() + "'");
                             }
-                            String gephiMinorVersionModule = getMinorVersion(gephiVersionModule);
+                            String gephiMinorVersionModule = MetadataUtils.getMinorVersion(gephiVersionModule);
                             if (gephiMinorVersionModule.equals(gephiMinorVersion)) {
                                 File[] nbmsFiles = targetDir.listFiles(new FilenameFilter() {
                                     @Override
@@ -144,22 +144,6 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
             getLog().info("Generated compressed autoupdate site content at " + outputFolder.getAbsolutePath());
         } else {
             throw new MojoExecutionException("This should be executed on the reactor project");
-        }
-    }
-
-    /**
-     * Transforms a standard Maven version into just the minor version.
-     * @param gephiVersion a gephi version
-     * @return version in format <code>major.minor</code>
-     * @throws MojoExecutionException if the parsing fails
-     */
-    protected static String getMinorVersion(String gephiVersion) throws MojoExecutionException {
-        try {
-            boolean snapshot = gephiVersion.endsWith("-SNAPSHOT");
-            String[] versions = gephiVersion.split("\\.");
-            return versions[0] + "." + versions[1] + (snapshot ? "-SNAPSHOT" : "");
-        } catch(Exception e) {
-            throw new MojoExecutionException("Error while parsing the 'gephi.version'", e);
         }
     }
 }
