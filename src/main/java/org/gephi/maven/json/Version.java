@@ -19,4 +19,5 @@ public class Version {
 
     public String url;
     public String last_update;
+    public String plugin_version;
 }

@@ -34,7 +34,7 @@ public class ScreenshotUtils {
 
     private static final String THUMBNAIL_SUFFIX = "-thumbnail";
 
-    protected static List<Image> copyScreenshots(MavenProject mavenProject, File outputFolder, String urlPrefix, Log log) throws MojoExecutionException {
+    protected static List<Image> copyScreenshots(MavenProject mavenProject, File outputFolder, String urlPrefix, Log log, boolean dryRun) throws MojoExecutionException {
         File folder = new File(mavenProject.getBasedir(), "src/img");
         if (folder.exists()) {
             log.debug("Folder '" + folder.getAbsolutePath() + "' exists");
@@ -60,7 +60,7 @@ public class ScreenshotUtils {
             log.debug(files.length + " images found in source folder");
 
             // Create dest folder
-            if (outputFolder.mkdirs()) {
+            if (!dryRun && outputFolder.mkdirs()) {
                 log.debug("Output folder '" + outputFolder.getAbsolutePath() + "' was created");
             }
 
@@ -69,40 +69,45 @@ public class ScreenshotUtils {
                 if (file.getName().contains(" ")) {
                     throw new MojoExecutionException("Image file '" + file.getAbsolutePath() + "' contains spaces. Please rename image and try again");
                 }
-                // Read original file and copy to dest folder
-                String fileName = file.getName().substring(0, file.getName().lastIndexOf(".")) + ".png";
-                File imageDestFile = new File(outputFolder, fileName);
-                try {
-                    Thumbnails.of(file).
+
+                if(!dryRun) {
+                    // Read original file and copy to dest folder
+                    String fileName = file.getName().substring(0, file.getName().lastIndexOf(".")) + ".png";
+                    File imageDestFile = new File(outputFolder, fileName);
+                    try {
+                        Thumbnails.of(file).
                             outputFormat("png").
                             outputQuality(0.90).
                             resizer(Resizers.NULL).
                             scale(1.0).
                             toFile(imageDestFile);
-                } catch (IOException ex) {
-                    log.error("Can't copy image file from '" + file.getAbsolutePath() + "' to '" + imageDestFile.getAbsolutePath() + "'", ex);
-                }
+                    } catch (IOException ex) {
+                        log.error("Can't copy image file from '" + file.getAbsolutePath() + "' to '" +
+                            imageDestFile.getAbsolutePath() + "'", ex);
+                    }
 
-                Image image = new Image();
-                image.image = urlPrefix + fileName;
-                images.add(image);
+                    Image image = new Image();
+                    image.image = urlPrefix + fileName;
+                    images.add(image);
 
-                // Thumbnail path
-                String thumFileName = file.getName().substring(0, file.getName().lastIndexOf(".")) + THUMBNAIL_SUFFIX + ".png";
-                File thumbFile = new File(outputFolder, thumFileName);
-                if (!thumbFile.exists()) {
-                    // Thumbnail creation
-                    try {
-                        Thumbnails.of(file)
+                    // Thumbnail path
+                    String thumFileName =
+                        file.getName().substring(0, file.getName().lastIndexOf(".")) + THUMBNAIL_SUFFIX + ".png";
+                    File thumbFile = new File(outputFolder, thumFileName);
+                    if (!thumbFile.exists()) {
+                        // Thumbnail creation
+                        try {
+                            Thumbnails.of(file)
                                 .outputFormat("png")
                                 .outputQuality(0.90)
                                 .size(140, 140)
                                 .crop(Positions.CENTER)
                                 .toFile(thumbFile);
-                        log.debug("Created thumbnail in file '" + thumbFile.getAbsolutePath() + "'");
-                        image.thumbnail = urlPrefix + thumFileName;
-                    } catch (IOException ex) {
-                        log.error("Can't create thumbnail for image file '" + file.getAbsolutePath() + "'", ex);
+                            log.debug("Created thumbnail in file '" + thumbFile.getAbsolutePath() + "'");
+                            image.thumbnail = urlPrefix + thumFileName;
+                        } catch (IOException ex) {
+                            log.error("Can't create thumbnail for image file '" + file.getAbsolutePath() + "'", ex);
+                        }
                     }
                 }
 

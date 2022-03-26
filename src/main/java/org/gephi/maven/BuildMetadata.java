@@ -96,6 +96,14 @@ public class BuildMetadata extends AbstractMojo {
             throw new MojoExecutionException("The 'gephi.version' property should be defined");
         }
         getLog().debug("Building metadata for 'gephi.version=" + gephiVersion + "'");
+        String gephiMinorVersion = MetadataUtils.getMinorVersion(gephiVersion);
+        getLog().debug("Gephi minor version is '" + gephiMinorVersion + "'");
+
+        // Dry run when dev version
+        boolean dryRun = gephiVersion.endsWith("-SNAPSHOT");
+        if (dryRun) {
+           getLog().info("Running in dryrun mode because Gephi version contains SNAPSHOT");
+        }
 
         if (reactorProjects != null && reactorProjects.size() > 0) {
             getLog().debug("Found " + reactorProjects.size() + " projects in reactor");
@@ -103,12 +111,13 @@ public class BuildMetadata extends AbstractMojo {
             for (MavenProject proj : reactorProjects) {
                 if (proj.getPackaging().equals("nbm")) {
                     String gephiVersionModule = proj.getProperties().getProperty("gephi.version");
+                    String gephiMinorVersionModule = MetadataUtils.getMinorVersion(gephiVersionModule);
 
-                    if (gephiVersionModule.equals(gephiVersion)) {
-                        getLog().debug("Found 'nbm' project '" + proj.getName() + "' with artifactId=" + proj.getArtifactId() + " and groupId=" + proj.getGroupId());
+                    if (gephiMinorVersionModule.equals(gephiMinorVersion)) {
+                        getLog().info("Found 'nbm' project '" + proj.getName() + "' with artifactId=" + proj.getArtifactId() + " and groupId=" + proj.getGroupId());
                         modules.add(proj);
                     } else {
-                        getLog().debug("Ignored project '" + proj.getName() + "' based on 'gephi.version' value '" + gephiVersionModule + "'");
+                        getLog().warn("Ignored project '" + proj.getName() + "' based on 'gephi.version' value '" + gephiVersionModule + "'");
                     }
                 }
             }
@@ -175,12 +184,25 @@ public class BuildMetadata extends AbstractMojo {
                     }
                 }
 
+                // Skip if the plugin version has not changed
+                if(foundPrevious && pm.versions.containsKey(gephiVersion) &&
+                    pm.versions.get(gephiVersion).plugin_version != null &&
+                    pm.versions.get(gephiVersion).plugin_version.equals(entry.getKey().getVersion())) {
+                    getLog().info("Skipped plugin id=" + pm.id
+                        + " because the version for gephi.version="
+                        + gephiVersion + " hasn't changed (" + entry.getKey().getVersion() + ")");
+                    continue;
+                } else {
+                    getLog().info("Updating plugin id=" + pm.id
+                        + " to version '"+entry.getKey().getVersion()+ "'" );
+                }
+
                 manifestUtils.readManifestMetadata(topPlugin, pm);
                 pm.license = MetadataUtils.getLicenseName(topPlugin);
                 pm.authors = MetadataUtils.getAuthors(topPlugin);
                 pm.last_update = dateFormat.format(new Date());
                 pm.readme = MetadataUtils.getReadme(topPlugin, getLog());
-                pm.images = ScreenshotUtils.copyScreenshots(topPlugin, new File(outputDirectory, "imgs" + File.separator + pm.id), "imgs" + "/" + pm.id + "/", getLog());
+                pm.images = ScreenshotUtils.copyScreenshots(topPlugin, new File(outputDirectory, "imgs" + File.separator + pm.id), "imgs" + "/" + pm.id + "/", getLog(), dryRun);
                 pm.homepage = MetadataUtils.getHomepage(topPlugin);
                 pm.sourcecode = MetadataUtils.getSourceCode(topPlugin, getLog());
 
@@ -189,7 +211,8 @@ public class BuildMetadata extends AbstractMojo {
                 }
                 Version v = new Version();
                 v.last_update = dateFormat.format(new Date());
-                v.url = gephiVersion + "/" + ModuleUtils.getModuleDownloadPath(entry.getKey(), entry.getValue(), new File(outputDirectory, gephiVersion), getLog());
+                v.url = gephiMinorVersion + "/" + ModuleUtils.getModuleDownloadPath(entry.getKey(), entry.getValue(), new File(outputDirectory, gephiMinorVersion), getLog());
+                v.plugin_version = entry.getKey().getVersion();
                 pm.versions.put(gephiVersion, v);
 
                 if (!foundPrevious) {
@@ -199,14 +222,17 @@ public class BuildMetadata extends AbstractMojo {
 
             String json = gson.toJson(pluginsMetadata);
 
-            // Write json file
-            try {
-                FileWriter writer = new FileWriter(pluginsJsonFile);
-                writer.append(json);
-                writer.close();
-            } catch (IOException ex) {
-                throw new MojoExecutionException("Error while writing plugins.json file", ex);
+            if(!dryRun) {
+                // Write json file
+                try {
+                    FileWriter writer = new FileWriter(pluginsJsonFile);
+                    writer.append(json);
+                    writer.close();
+                } catch (IOException ex) {
+                    throw new MojoExecutionException("Error while writing plugins.json file", ex);
+                }
             }
+            getLog().info("Plugins.json file written with "+pluginsMetadata.plugins.size()+" plugins");
         } else {
             throw new MojoExecutionException("The project should be a reactor project");
         }
