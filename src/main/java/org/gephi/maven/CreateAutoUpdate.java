@@ -65,8 +65,9 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
         if (gephiVersion == null) {
             throw new MojoExecutionException("The 'gephi.version' property should be defined");
         }
+        String gephiMinorVersion = getMinorVersion(gephiVersion);
 
-        File outputFolder = new File(outputDirectory, gephiVersion);
+        File outputFolder = new File(outputDirectory, gephiMinorVersion);
         if (outputFolder.mkdirs()) {
             getLog().debug("Folder '" + outputFolder.getAbsolutePath() + "' created.");
         }
@@ -84,7 +85,8 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                             if (gephiVersionModule == null) {
                                 throw new MojoExecutionException("The 'gephi.version' property should be defined in project '" + proj.getName() + "'");
                             }
-                            if (gephiVersionModule.equals(gephiVersion)) {
+                            String gephiMinorVersionModule = getMinorVersion(gephiVersionModule);
+                            if (gephiMinorVersionModule.equals(gephiMinorVersion)) {
                                 File[] nbmsFiles = targetDir.listFiles(new FilenameFilter() {
                                     @Override
                                     public boolean accept(File dir, String name) {
@@ -100,7 +102,7 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                                     getLog().info("Copying  '" + nbmFile + "' to '" + outputFolder.getAbsolutePath() + "'");
                                 }
                             } else {
-                                getLog().warn("The NBM of module '" + proj.getName() + "' has been ignored because its 'gephi.version' is '" + gephiVersionModule + "' while '" + gephiVersion + "' is expected");
+                                getLog().warn("The NBM of module '" + proj.getName() + "' has been ignored because its Gephi Version is '" + gephiMinorVersionModule + "' while '" + gephiMinorVersion + "' is expected");
                             }
                         } else {
                             getLog().error("The module target dir for project '" + proj.getName() + "' doesn't exists");
@@ -142,6 +144,22 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
             getLog().info("Generated compressed autoupdate site content at " + outputFolder.getAbsolutePath());
         } else {
             throw new MojoExecutionException("This should be executed on the reactor project");
+        }
+    }
+
+    /**
+     * Transforms a standard Maven version into just the minor version.
+     * @param gephiVersion a gephi version
+     * @return version in format <code>major.minor</code>
+     * @throws MojoExecutionException if the parsing fails
+     */
+    protected static String getMinorVersion(String gephiVersion) throws MojoExecutionException {
+        try {
+            boolean snapshot = gephiVersion.endsWith("-SNAPSHOT");
+            String[] versions = gephiVersion.split("\\.");
+            return versions[0] + "." + versions[1] + (snapshot ? "-SNAPSHOT" : "");
+        } catch(Exception e) {
+            throw new MojoExecutionException("Error while parsing the 'gephi.version'", e);
         }
     }
 }
