@@ -122,9 +122,11 @@ public class GenerateUtils {
     }
 
     protected static String validateFolderName(String val) {
-        if (val != null) {
+        if (val != null && !val.isEmpty()) {
             if (!val.matches("[a-zA-Z0-9]+")) {
                 System.err.println("The plugin folder name can't contain spaces or special characters");
+            } else if(!Character.isUpperCase(val.charAt(0))) {
+                System.err.println("The plugin folder must start with an uppercase character (and is ideally camel case)");
             } else {
                 return val;
             }
