@@ -18,6 +18,7 @@ package org.gephi.maven;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.maven.Maven;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -94,24 +95,29 @@ public class Validate extends AbstractMojo {
         Map<MavenProject, List<MavenProject>> tree = ModuleUtils.getModulesTree(projects, getLog());
         if (tree.isEmpty()) {
             throw new MojoExecutionException("Multiple modules have been found but no suite detected, make sure one of the module has dependencies on the others");
-        } else if (tree.size() > 1) {
-            throw new MojoExecutionException("Multiple module suites have been found, this is not supported");
+        } else {
+            getLog().info("Multiple modules found: " + tree.size() + " projects");
         }
-        Map.Entry<MavenProject, List<MavenProject>> entry = tree.entrySet().iterator().next();
-        List<MavenProject> children = entry.getValue();
-        checkSameGephiVersion(children);
 
-        children.remove(entry.getKey());
-        getLog().info("Suite of modules found: '" + entry.getKey().getName() + "'");
-        for (MavenProject child : children) {
-            getLog().info("   '" + child.getName() + "' is a dependency");
+        for (Map.Entry<MavenProject, List<MavenProject>> entry : tree.entrySet()) {
+            getLog().info("Suite of modules found: '" + entry.getKey().getName() + "'");
+            List<MavenProject> children = entry.getValue();
+            checkSameGephiVersion(children);
+
+            children.remove(entry.getKey());
+            if(children.isEmpty()) {
+                getLog().info("   Single module '" + entry.getKey().getName() + "'");
+            }
+            for (MavenProject child : children) {
+                getLog().info("   '" + child.getName() + "' is a dependency");
+            }
+            for (MavenProject child : children) {
+                checkGephiVersion(child);
+                manifestUtils.checkManifestShowClientFalse(child);
+            }
+            checkGephiVersion(entry.getKey());
+            checkMetadata(entry.getKey());
         }
-        for (MavenProject child : children) {
-            checkGephiVersion(child);
-            manifestUtils.checkManifestShowClientFalse(child);
-        }
-        checkGephiVersion(entry.getKey());
-        checkMetadata(entry.getKey());
     }
 
     private void checkMetadata(MavenProject moduleProject) throws MojoExecutionException {
