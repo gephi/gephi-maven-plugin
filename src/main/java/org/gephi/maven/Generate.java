@@ -153,7 +153,7 @@ public class Generate extends AbstractMojo {
         //Close input
         input.close();
 
-        //Get sourcode
+        //Get source code
         String sourceCodeUrl = MetadataUtils.getSourceCodeUrlFromGit(project, getLog());
         getLog().debug("Obtained source code url from Git: " + sourceCodeUrl);
 
@@ -172,6 +172,10 @@ public class Generate extends AbstractMojo {
         File nbmFolder = GenerateUtils.createFolder(new File(srcMain, "nbm"), getLog());
         GenerateUtils.createFolder(new File(srcMain, "java"), getLog());
         GenerateUtils.createFolder(new File(srcMain, "resources"), getLog());
+
+        //Create src/test/java
+        File srcTest = GenerateUtils.createFolder(new File(pluginFolder, "src" + File.separator + "test"), getLog());
+        GenerateUtils.createFolder(new File(srcTest, "java"), getLog());
 
         //Create manifest
         GenerateUtils.createManifest(new File(nbmFolder, "manifest.mf"), branding, shortDescription, longDescription, category);
