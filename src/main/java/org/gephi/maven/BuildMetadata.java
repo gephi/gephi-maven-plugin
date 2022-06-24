@@ -199,6 +199,9 @@ public class BuildMetadata extends AbstractMojo {
 
                     // Set property so it can be used in CreateAutoUpdate task
                     topPlugin.getProperties().setProperty("skipPlugin", "true");
+                    for (MavenProject childPlugin : entry.getValue()) {
+                        childPlugin.getProperties().setProperty("skipPlugin", "true");
+                    }
                     continue;
                 } else {
                     getLog().info("Updating plugin id=" + pm.id
