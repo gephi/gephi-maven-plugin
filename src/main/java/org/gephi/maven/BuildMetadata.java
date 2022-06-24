@@ -105,6 +105,11 @@ public class BuildMetadata extends AbstractMojo {
            getLog().info("Running in dryrun mode because Gephi version contains SNAPSHOT");
         }
 
+        // Create folder
+        if (outputDirectory.mkdirs()) {
+            getLog().debug("Folder '" + outputDirectory.getAbsolutePath() + "' created.");
+        }
+
         if (reactorProjects != null && reactorProjects.size() > 0) {
             getLog().debug("Found " + reactorProjects.size() + " projects in reactor");
             List<MavenProject> modules = new ArrayList<MavenProject>();
@@ -191,6 +196,9 @@ public class BuildMetadata extends AbstractMojo {
                     getLog().info("Skipped plugin id=" + pm.id
                         + " because the version for gephi.version="
                         + gephiVersion + " hasn't changed (" + entry.getKey().getVersion() + ")");
+
+                    // Set property so it can be used in CreateAutoUpdate task
+                    topPlugin.getProperties().setProperty("skipPlugin", "true");
                     continue;
                 } else {
                     getLog().info("Updating plugin id=" + pm.id

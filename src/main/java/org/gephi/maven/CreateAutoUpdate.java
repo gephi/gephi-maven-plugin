@@ -18,7 +18,9 @@ package org.gephi.maven;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.netbeans.nbm.utils.AbstractNetbeansMojo;
 import org.apache.tools.ant.types.FileSet;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -72,20 +74,32 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
             getLog().debug("Folder '" + outputFolder.getAbsolutePath() + "' created.");
         }
 
+        Set<File> skippedFiles = new HashSet<>();
+
         if (reactorProjects != null && reactorProjects.size() > 0) {
             Project antProject = registerNbmAntTasks();
 
             for (MavenProject proj : reactorProjects) {
                 if (proj.getPackaging().equals("nbm")) {
+                    // Property set by BuildMetadata based on the latest plugins.json
+                    boolean skipPlugin = proj.getProperties().getProperty("skipPlugin", "false").equals("true");
+                    if (skipPlugin) {
+                        getLog().info("The plugin '"+proj.getName()+"' will be skipped " +
+                            "because its version hasn't changed");
+                    }
                     File moduleDir = proj.getFile().getParentFile();
                     if (moduleDir != null && moduleDir.exists()) {
                         File targetDir = new File(moduleDir, "target");
                         if (targetDir.exists()) {
-                            String gephiVersionModule = proj.getProperties().getProperty("gephi.version");
+                            String gephiVersionModule =
+                                proj.getProperties().getProperty("gephi.version");
                             if (gephiVersionModule == null) {
-                                throw new MojoExecutionException("The 'gephi.version' property should be defined in project '" + proj.getName() + "'");
+                                throw new MojoExecutionException(
+                                    "The 'gephi.version' property should be defined in project '" +
+                                        proj.getName() + "'");
                             }
-                            String gephiMinorVersionModule = MetadataUtils.getMinorVersion(gephiVersionModule);
+                            String gephiMinorVersionModule =
+                                MetadataUtils.getMinorVersion(gephiVersionModule);
                             if (gephiMinorVersionModule.equals(gephiMinorVersion)) {
                                 File[] nbmsFiles = targetDir.listFiles(new FilenameFilter() {
                                     @Override
@@ -96,19 +110,30 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                                 for (File nbmFile : nbmsFiles) {
                                     try {
                                         FileUtils.copyFileToDirectory(nbmFile, outputFolder);
+                                        if (skipPlugin) {
+                                            skippedFiles.add(new File(outputFolder, nbmFile.getName()));
+                                        }
                                     } catch (IOException ex) {
-                                        getLog().error("Error while copying nbm file '" + nbmFile.getAbsolutePath() + "'", ex);
+                                        getLog().error("Error while copying nbm file '" +
+                                            nbmFile.getAbsolutePath() + "'", ex);
                                     }
-                                    getLog().info("Copying  '" + nbmFile + "' to '" + outputFolder.getAbsolutePath() + "'");
+                                    getLog().info("Copying  '" + nbmFile + "' to '" +
+                                        outputFolder.getAbsolutePath() + "'");
                                 }
                             } else {
-                                getLog().warn("The NBM of module '" + proj.getName() + "' has been ignored because its Gephi Version is '" + gephiMinorVersionModule + "' while '" + gephiMinorVersion + "' is expected");
+                                getLog().warn("The NBM of module '" + proj.getName() +
+                                    "' has been ignored because its Gephi Version is '" +
+                                    gephiMinorVersionModule + "' while '" + gephiMinorVersion +
+                                    "' is expected");
                             }
                         } else {
-                            getLog().error("The module target dir for project '" + proj.getName() + "' doesn't exists");
+                            getLog().error(
+                                "The module target dir for project '" + proj.getName() +
+                                    "' doesn't exists");
                         }
                     } else {
-                        getLog().error("The module dir for project '" + proj.getName() + "' doesn't exists");
+                        getLog().error("The module dir for project '" + proj.getName() +
+                            "' doesn't exists");
                     }
                 }
             }
@@ -142,6 +167,15 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                 throw new MojoExecutionException("Cannot create gzipped version of the update site xml file.", ex);
             }
             getLog().info("Generated compressed autoupdate site content at " + outputFolder.getAbsolutePath());
+
+            // Remove skipped NBM files
+            for (File file : skippedFiles) {
+                if (!file.delete()) {
+                    getLog().warn("The skipped plugin file '"+file.getName()+"' couldn't be deleted");
+                } else {
+                    getLog().info("Skipped file '"+file.getName()+"' deleted");
+                }
+            }
         } else {
             throw new MojoExecutionException("This should be executed on the reactor project");
         }
