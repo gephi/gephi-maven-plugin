@@ -16,8 +16,14 @@
 package org.gephi.maven;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,6 +67,34 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
     @Parameter(required = true, readonly = true, property = "reactorProjects")
     private List<MavenProject> reactorProjects;
 
+    /**
+     * Metadata url.
+     */
+    @Parameter(required = true)
+    protected String metadataUrl;
+
+    @Parameter(defaultValue = "false")
+    protected Boolean skipUnchangedVersions;
+
+    private void downloadLatestNbm(String version, File destinationFile) throws MojoExecutionException {
+        //Download previous file
+        try {
+            URL url = new URL(metadataUrl + version + "/" + destinationFile.getName());
+            URLConnection connection = url.openConnection();
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+            connection.connect();
+            InputStream stream = connection.getInputStream();
+            ReadableByteChannel rbc = Channels.newChannel(stream);
+            FileOutputStream fos = new FileOutputStream(destinationFile);
+            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+            rbc.close();
+            stream.close();
+            getLog().info("Downloaded plugin file to '" + destinationFile.getAbsolutePath() + "'");
+        } catch (Exception e) {
+            throw new MojoExecutionException("Error while downloading previous 'plugins.json'", e);
+        }
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         String gephiVersion = (String) project.getProperties().get("gephi.version");
@@ -83,8 +117,8 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                 if (proj.getPackaging().equals("nbm")) {
                     // Property set by BuildMetadata based on the latest plugins.json
                     boolean skipPlugin = proj.getProperties().getProperty("skipPlugin", "false").equals("true");
-                    if (skipPlugin) {
-                        getLog().info("The plugin '"+proj.getName()+"' will be skipped " +
+                    if (skipUnchangedVersions && skipPlugin) {
+                        getLog().info("The plugin '"+proj.getName()+"' will be downloaded " +
                             "because its version hasn't changed");
                     }
                     File moduleDir = proj.getFile().getParentFile();
@@ -109,16 +143,17 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                                 });
                                 for (File nbmFile : nbmsFiles) {
                                     try {
-                                        FileUtils.copyFileToDirectory(nbmFile, outputFolder);
-                                        if (skipPlugin) {
+                                        if (skipUnchangedVersions && skipPlugin) {
                                             skippedFiles.add(new File(outputFolder, nbmFile.getName()));
+                                        } else {
+                                            FileUtils.copyFileToDirectory(nbmFile, outputFolder);
+                                            getLog().info("Copying  '" + nbmFile + "' to '" +
+                                                outputFolder.getAbsolutePath() + "'");
                                         }
                                     } catch (IOException ex) {
                                         getLog().error("Error while copying nbm file '" +
                                             nbmFile.getAbsolutePath() + "'", ex);
                                     }
-                                    getLog().info("Copying  '" + nbmFile + "' to '" +
-                                        outputFolder.getAbsolutePath() + "'");
                                 }
                             } else {
                                 getLog().warn("The NBM of module '" + proj.getName() +
@@ -135,6 +170,13 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                         getLog().error("The module dir for project '" + proj.getName() +
                             "' doesn't exists");
                     }
+                }
+            }
+
+            // Download last version of skipped plugins
+            if (skipUnchangedVersions) {
+                for (File skippedFile : skippedFiles) {
+                    downloadLatestNbm(gephiMinorVersion, skippedFile);
                 }
             }
 
@@ -167,15 +209,6 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
                 throw new MojoExecutionException("Cannot create gzipped version of the update site xml file.", ex);
             }
             getLog().info("Generated compressed autoupdate site content at " + outputFolder.getAbsolutePath());
-
-            // Remove skipped NBM files
-            for (File file : skippedFiles) {
-                if (!file.delete()) {
-                    getLog().warn("The skipped plugin file '"+file.getName()+"' couldn't be deleted");
-                } else {
-                    getLog().info("Skipped file '"+file.getName()+"' deleted");
-                }
-            }
         } else {
             throw new MojoExecutionException("This should be executed on the reactor project");
         }
