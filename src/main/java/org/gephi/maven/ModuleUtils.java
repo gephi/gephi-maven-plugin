@@ -89,14 +89,14 @@ public class ModuleUtils {
         File dest;
         if (modules.size() > 1) {
             dest = new File(directory, topPlugin.getArtifactId() + "-" + topPlugin.getVersion() + ".zip");
-            log.debug("The plugin '" + topPlugin + "' is a suite, creating zip archive at '" + dest.getAbsolutePath() + "'");
+            log.debug("The plugin '" + topPlugin.getName() + "' is a suite, creating zip archive at '" + dest.getAbsolutePath() + "'");
 
             // Verify files exist and add to archive
             try {
                 ZipArchiver archiver = new ZipArchiver();
                 for (MavenProject module : modules) {
-
-                    File f = new File(directory, module.getArtifactId() + "-" + module.getVersion() + ".nbm");
+                    File folder = new File(module.getBasedir(), "target");
+                    File f = new File(folder, module.getArtifactId() + "-" + module.getVersion() + ".nbm");
                     if (!f.exists()) {
                         throw new MojoExecutionException("The NBM file '" + f.getAbsolutePath() + "' can't be found");
                     }
