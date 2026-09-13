@@ -92,7 +92,7 @@ public class Migrate extends AbstractMojo {
         //Get gephi.version
         String gephiVersion = project.getProperties().getProperty("gephi.version");
         if (gephiVersion == null) {
-            throw new MojoExecutionException("Can't obtain gephi version number");
+            throw new MojoExecutionException("Can't obtain gephi version number: property 'gephi.version' is not defined in this project's pom.xml. This goal must be run from a 'gephi-plugins' repository checkout, not from 'gephi-maven-plugin' itself.");
         }
         getLog().info("Gephi version is defined as '" + gephiVersion + "'");
 
