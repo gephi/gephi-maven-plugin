@@ -15,7 +15,9 @@
  */
 package org.gephi.maven;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.maven.Maven;
@@ -26,6 +28,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.gephi.maven.json.Author;
 import org.gephi.maven.json.PluginMetadata;
 
 /**
@@ -33,6 +36,12 @@ import org.gephi.maven.json.PluginMetadata;
  */
 @Mojo(name = "validate", aggregator = true, defaultPhase = LifecyclePhase.VALIDATE)
 public class Validate extends AbstractMojo {
+
+    /**
+     * Above this length, the short description warning is triggered as it's
+     * meant to be a single, short tagline rather than a paragraph.
+     */
+    private static final int SHORT_DESCRIPTION_WARNING_LENGTH = 200;
 
     /**
      * NBM manifest path.
@@ -99,6 +108,13 @@ public class Validate extends AbstractMojo {
             getLog().info("Multiple modules found: " + tree.size() + " projects");
         }
 
+        // An IdentityHashMap is required here: two distinct plugin projects that
+        // mistakenly share the same groupId/artifactId/version (the exact case
+        // checkNoDuplicatePlugins needs to catch) are "equal" per MavenProject's
+        // own equals()/hashCode(), so a regular Map would silently collapse them
+        // into a single entry before the check below ever runs.
+        Map<MavenProject, PluginMetadata> topLevelMetadata = new IdentityHashMap<MavenProject, PluginMetadata>();
+
         for (Map.Entry<MavenProject, List<MavenProject>> entry : tree.entrySet()) {
             getLog().info("Suite of modules found: '" + entry.getKey().getName() + "'");
             List<MavenProject> children = entry.getValue();
@@ -116,11 +132,14 @@ public class Validate extends AbstractMojo {
                 manifestUtils.checkManifestShowClientFalse(child);
             }
             checkGephiVersion(entry.getKey());
-            checkMetadata(entry.getKey());
+            topLevelMetadata.put(entry.getKey(), checkMetadata(entry.getKey()));
         }
+
+        // Cross-plugin checks, only meaningful when comparing multiple top-level plugins
+        ModuleUtils.checkNoDuplicatePlugins(topLevelMetadata, getLog());
     }
 
-    private void checkMetadata(MavenProject moduleProject) throws MojoExecutionException {
+    private PluginMetadata checkMetadata(MavenProject moduleProject) throws MojoExecutionException {
         if (MetadataUtils.getLicenseName(moduleProject) == null) {
             throw new MojoExecutionException("The 'licenseName' configuration should be set for the project '" + moduleProject.getName() + "'. This can be added to the configuration of the 'nbm-maven-plugin' plugin. In addition, a 'licenseFile' can be specified, relative to the module's root folder.");
         }
@@ -128,7 +147,92 @@ public class Validate extends AbstractMojo {
             throw new MojoExecutionException("The 'author' configuration should be set fot the project '" + moduleProject.getName() + "'. This can be added to the configuration of the 'nbm-maven-plugin' plugin. Multiple authors can be specificed, separated by a comma.");
         }
 
-        manifestUtils.readManifestMetadata(moduleProject, new PluginMetadata());
+        PluginMetadata metadata = new PluginMetadata();
+        manifestUtils.readManifestMetadata(moduleProject, metadata);
+
+        checkReadme(moduleProject);
+        checkLicenseFile(moduleProject);
+        checkAuthorEmails(moduleProject);
+        checkScreenshots(moduleProject);
+        checkFolderName(moduleProject);
+        checkShortDescriptionLength(moduleProject, metadata);
+
+        return metadata;
+    }
+
+    /**
+     * Warns when no README.md file is present, as it's displayed on the
+     * plugin's page. Not a hard failure since the 'generate' goal itself
+     * treats it as optional.
+     */
+    private void checkReadme(MavenProject moduleProject) {
+        String readme = MetadataUtils.getReadme(moduleProject, getLog());
+        if (readme == null || readme.trim().isEmpty()) {
+            getLog().warn("No 'README.md' file was found at the root of the project '" + moduleProject.getName() + "'. It is displayed on the plugin's page and helps users understand what the plugin does, consider adding one.");
+        }
+    }
+
+    /**
+     * Fails when a 'licenseFile' configuration is set but points to a file
+     * that doesn't exist, since this is always a mistake (not an optional
+     * detail like a missing README or screenshot).
+     */
+    private void checkLicenseFile(MavenProject moduleProject) throws MojoExecutionException {
+        String licenseFile = MetadataUtils.getLicenseFile(moduleProject);
+        if (licenseFile != null && !licenseFile.trim().isEmpty()) {
+            File file = new File(moduleProject.getBasedir(), licenseFile);
+            if (!file.exists()) {
+                throw new MojoExecutionException("The 'licenseFile' configuration for project '" + moduleProject.getName() + "' points to '" + licenseFile + "' but this file can't be found in '" + moduleProject.getBasedir().getAbsolutePath() + "'.");
+            }
+        }
+    }
+
+    /**
+     * Warns when an 'authorEmail' is set but doesn't look like a valid email
+     * address, reusing the same pattern the interactive 'generate' goal
+     * enforces.
+     */
+    private void checkAuthorEmails(MavenProject moduleProject) {
+        List<Author> authors = MetadataUtils.getAuthors(moduleProject);
+        if (authors != null) {
+            for (Author author : authors) {
+                if (author.email != null && !author.email.isEmpty()
+                        && !GenerateUtils.VALID_EMAIL_ADDRESS_REGEX.matcher(author.email).find()) {
+                    getLog().warn("The 'authorEmail' value '" + author.email + "' for project '" + moduleProject.getName() + "' doesn't look like a valid email address.");
+                }
+            }
+        }
+    }
+
+    /**
+     * Warns when no screenshot is found, as it makes the plugin's page more
+     * appealing.
+     */
+    private void checkScreenshots(MavenProject moduleProject) {
+        if (!ScreenshotUtils.hasScreenshots(moduleProject)) {
+            getLog().warn("No screenshot images were found in 'src/img' for project '" + moduleProject.getName() + "'. Adding at least one is recommended, it makes the plugin's page more appealing.");
+        }
+    }
+
+    /**
+     * Warns when the module's folder name doesn't follow the convention
+     * enforced by the interactive 'generate' goal.
+     */
+    private void checkFolderName(MavenProject moduleProject) {
+        String folderName = moduleProject.getBasedir().getName();
+        if (!folderName.matches("[a-zA-Z0-9]+") || !Character.isUpperCase(folderName.charAt(0))) {
+            getLog().warn("The plugin folder '" + folderName + "' for project '" + moduleProject.getName() + "' should ideally only contain letters and digits and start with an uppercase character (e.g. 'MyPlugin').");
+        }
+    }
+
+    /**
+     * Warns when the short description is unusually long, as it's meant to
+     * be a short tagline (see the 'generate' goal's own prompt).
+     */
+    private void checkShortDescriptionLength(MavenProject moduleProject, PluginMetadata metadata) {
+        if (metadata.short_description != null && metadata.short_description.length() > SHORT_DESCRIPTION_WARNING_LENGTH) {
+            getLog().warn("The short description for project '" + moduleProject.getName() + "' is " + metadata.short_description.length() + " characters long. It's meant to be a short, one-sentence tagline; consider shortening it and moving details to the long description or the README instead.");
+        }
     }
 
     private void checkGephiVersion(MavenProject moduleProject) throws MojoExecutionException {

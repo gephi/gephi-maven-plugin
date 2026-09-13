@@ -119,4 +119,29 @@ public class ScreenshotUtils {
         }
         return null;
     }
+
+    /**
+     * Checks whether the given project has at least one screenshot image in
+     * its <em>src/img</em> folder.
+     *
+     * @param mavenProject project
+     * @return true if at least one screenshot image is found
+     */
+    protected static boolean hasScreenshots(MavenProject mavenProject) {
+        File folder = new File(mavenProject.getBasedir(), "src/img");
+        if (!folder.isDirectory()) {
+            return false;
+        }
+
+        File[] files = folder.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return !name.startsWith(".")
+                        && (name.endsWith(".png") || name.endsWith(".jpg")
+                        || name.endsWith(".jpeg") || name.endsWith(".gif"))
+                        && !name.contains(THUMBNAIL_SUFFIX);
+            }
+        });
+        return files != null && files.length > 0;
+    }
 }

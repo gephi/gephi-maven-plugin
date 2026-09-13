@@ -23,8 +23,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -47,6 +50,17 @@ public class ManifestUtils {
         "Filter", "Generator", "Metric", "Preview", "Tool",
         "Appearance", "Clustering", "Other Category"
     };
+
+    /**
+     * Maximum byte length, per the JAR manifest format, of a single
+     * "Key: value" line in the manifest.mf file. Above this length, the
+     * JDK's own manifest reader ({@code java.util.jar.Manifest}) - which
+     * {@code ExamineManifest#checkFile()} already relies on below - refuses
+     * to even read the file, failing with a cryptic "line too long"
+     * {@code IOException}. This is checked upfront on the raw file so a
+     * clear, actionable error can be reported instead of that cryptic one.
+     */
+    protected final static int MANIFEST_LINE_LENGTH_LIMIT = 512;
 
     private final Log log;
     private final String sourceManifestFile;
@@ -153,6 +167,8 @@ public class ManifestUtils {
             throw new MojoExecutionException("Cannot locate a manifest.mf file at " + manifestFile.getAbsolutePath() + " for project " + proj.getName());
         }
 
+        checkManifestLineLengths(proj, manifestFile);
+
         // Check validity
         ExamineManifest examinator = new ExamineManifest(log);
         examinator.setManifestFile(manifestFile);
@@ -177,5 +193,46 @@ public class ManifestUtils {
     protected static boolean validateCategory(String category) {
         Set<String> allowedCategories = new HashSet<String>(Arrays.asList(CATEGORIES));
         return allowedCategories.contains(category);
+    }
+
+    /**
+     * Scans the raw manifest.mf file for lines that are too long for the
+     * manifest format to support (see {@link #MANIFEST_LINE_LENGTH_LIMIT}),
+     * and fails with a clear, actionable message identifying the offending
+     * entry. Without this upfront check, such a file still fails to build,
+     * but with a cryptic "line too long" error with no indication of which
+     * file or entry is at fault.
+     * <p>
+     * Continuation lines (starting with a space, per the manifest format's
+     * own line-folding convention) are skipped since they're already safe.
+     *
+     * @param proj project
+     * @param manifestFile manifest.mf file to scan
+     * @throws MojoExecutionException if a line is too long
+     */
+    private void checkManifestLineLengths(MavenProject proj, File manifestFile) throws MojoExecutionException {
+        List<String> lines;
+        try {
+            lines = Files.readAllLines(manifestFile.toPath(), StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            // Let the regular manifest reading below report the actual I/O error.
+            return;
+        }
+
+        for (String line : lines) {
+            if (line.startsWith(" ")) {
+                continue;
+            }
+            int lineLength = line.getBytes(StandardCharsets.UTF_8).length;
+            if (lineLength >= MANIFEST_LINE_LENGTH_LIMIT) {
+                String key = line.contains(":") ? line.substring(0, line.indexOf(':')) : "A";
+                throw new MojoExecutionException("The '" + key + "' entry in the manifest.mf file for project '"
+                    + proj.getName() + "' is " + lineLength + " bytes long, which reaches the "
+                    + MANIFEST_LINE_LENGTH_LIMIT + "-byte limit the manifest format supports (past this point, "
+                    + "the file can no longer even be read, and the plugin fails to build/load). Please shorten "
+                    + "the value, or move branding strings to a 'Bundle.properties' file referenced via the "
+                    + "'OpenIDE-Module-Localizing-Bundle' entry instead (recommended for long descriptions).");
+            }
+        }
     }
 }

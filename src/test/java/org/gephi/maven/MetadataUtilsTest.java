@@ -53,6 +53,22 @@ public class MetadataUtilsTest {
   }
 
   @Test
+  public void testGetLicenseFile() throws Exception {
+    MavenProject project = newProject(
+        newPlugin("org.apache.netbeans.utilities", "nbm-maven-plugin", "licenseName", "Apache 2.0", "licenseFile", "LICENSE.txt"));
+
+    Assert.assertEquals("LICENSE.txt", MetadataUtils.getLicenseFile(project));
+  }
+
+  @Test
+  public void testGetLicenseFileWhenNotSet() throws Exception {
+    MavenProject project = newProject(
+        newPlugin("org.apache.netbeans.utilities", "nbm-maven-plugin", "licenseName", "Apache 2.0"));
+
+    Assert.assertNull(MetadataUtils.getLicenseFile(project));
+  }
+
+  @Test
   public void testGetSourceCodeFromGephiPlugin() throws Exception {
     MavenProject project = newProject(
         newPlugin("org.gephi", "gephi-maven-plugin", "sourceCodeUrl", "https://github.com/gephi/my-plugin"));

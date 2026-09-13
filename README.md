@@ -64,6 +64,24 @@ This command is automatically run when working on the `gephi-plugins` repository
 
 - Checks the `OpenIDE-Module-Display-Category` entry is one of the following value: "Layout", "Export", "Import", "Data Laboratory", "Filter", "Generator", "Metric", "Preview", "Tool", "Appearance", "Clustering" or "Other Category".
 
+- Checks that no line in the manifest is too long for the manifest format to support. Past this limit, the plugin fails to even build; if the branding strings are too long, move them to a `Bundle.properties` file referenced via `OpenIDE-Module-Localizing-Bundle` instead.
+
+- Checks that no two plugins in the same build share the same `groupId`/`artifactId`, since it's used to derive the NetBeans module code name and a collision would prevent one of them from installing correctly.
+
+- Checks that a configured `licenseFile` actually exists.
+
+- Warns when the project has no `README.md` file, since it's displayed on the plugin's page.
+
+- Warns when the project has no screenshot images in its `src/img` folder, since they make the plugin's page more appealing.
+
+- Warns when a configured `authorEmail` doesn't look like a valid email address.
+
+- Warns when two plugins in the same build share the same branding name.
+
+- Warns when the plugin's folder name doesn't follow the naming convention enforced by the `generate` goal.
+
+- Warns when the short description is unusually long, as it's meant to be a short, one-sentence tagline.
+
 ### mvn org.gephi:gephi-maven-plugin:run
 
 This command runs a version of Gephi with the plugins pre-installed. This only works after the plugins have been built (i.e. by running `mvn package` on the repository).

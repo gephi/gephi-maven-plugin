@@ -18,8 +18,10 @@ package org.gephi.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,6 +29,7 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.codehaus.plexus.archiver.zip.ZipArchiver;
+import org.gephi.maven.json.PluginMetadata;
 
 public class ModuleUtils {
 
@@ -118,5 +121,51 @@ public class ModuleUtils {
             log.debug("The plugin is not a suite, return nbm file '" + dest.getAbsolutePath() + "'");
         }
         return dest.getName();
+    }
+
+    /**
+     * Checks that no two top-level plugins in the reactor share the same
+     * <em>groupId:artifactId</em> identity. This identity is what
+     * nbm-maven-plugin uses to derive the NetBeans module code name
+     * (codenamebase) in absence of an explicit one, so a collision would
+     * make one of the two plugins fail to install correctly alongside the
+     * other. Also warns (without failing the build) when two plugins share
+     * the same branding name, since that's confusing on the plugins page but
+     * not by itself a functional issue.
+     *
+     * @param topLevelMetadata map of top-level plugin project to its
+     * metadata
+     * @param log log
+     * @throws MojoExecutionException if two plugins share the same
+     * groupId:artifactId
+     */
+    protected static void checkNoDuplicatePlugins(Map<MavenProject, PluginMetadata> topLevelMetadata, Log log) throws MojoExecutionException {
+        Map<String, MavenProject> seenIdentities = new LinkedHashMap<String, MavenProject>();
+        Map<String, MavenProject> seenNames = new LinkedHashMap<String, MavenProject>();
+
+        for (Map.Entry<MavenProject, PluginMetadata> entry : topLevelMetadata.entrySet()) {
+            MavenProject proj = entry.getKey();
+
+            String identity = proj.getGroupId() + ":" + proj.getArtifactId();
+            MavenProject sameIdentity = seenIdentities.put(identity, proj);
+            if (sameIdentity != null) {
+                throw new MojoExecutionException("The project '" + proj.getName() + "' has the same groupId/artifactId ('"
+                    + identity + "') as project '" + sameIdentity.getName() + "'. Each plugin needs a unique "
+                    + "groupId/artifactId as it's used to derive its NetBeans module code name; a collision means "
+                    + "one of the two plugins won't install correctly. Please change the groupId or artifactId in "
+                    + "the pom.xml file.");
+            }
+
+            String name = entry.getValue() != null ? entry.getValue().name : null;
+            if (name != null && !name.trim().isEmpty()) {
+                String key = name.trim().toLowerCase(Locale.ROOT);
+                MavenProject sameName = seenNames.put(key, proj);
+                if (sameName != null) {
+                    log.warn("The project '" + proj.getName() + "' has the same branding name ('" + name
+                        + "') as project '" + sameName.getName() + "'. Consider using a unique name so the two "
+                        + "plugins are clearly distinguishable on the plugins page.");
+                }
+            }
+        }
     }
 }
