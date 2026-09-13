@@ -56,6 +56,24 @@ public class MetadataUtils {
     }
 
     /**
+     * Lookup and returns the value of the <em>licenseFile</em> configuration.
+     *
+     * @param project project
+     * @return license file path, relative to the module's root folder, or
+     * null if not found
+     */
+    protected static String getLicenseFile(MavenProject project) {
+        Plugin nbmPlugin = lookupNbmPlugin(project);
+        if (nbmPlugin != null) {
+            Xpp3Dom config = (Xpp3Dom) nbmPlugin.getConfiguration();
+            if (config != null && config.getChild("licenseFile") != null) {
+                return config.getChild("licenseFile").getValue();
+            }
+        }
+        return null;
+    }
+
+    /**
      * Lookup and returns the value of the <em>homePageUrl</em> configuration.
      *
      * @param project project
