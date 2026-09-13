@@ -67,8 +67,9 @@
             </plugin>
 #end
 
-            <!-- Also run the "*IT" generic contract tests brought in by gephi-plugins-tests,
-                 in addition to the default "*Test" pattern -->
+            <!-- Also run the generic contract tests bundled inside gephi-plugins-tests
+                 (e.g. LayoutIT), which Surefire otherwise wouldn't discover since they
+                 aren't compiled from this project's own src/test/java -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -81,30 +82,10 @@
                         <include>**/*TestCase.java</include>
                         <include>**/*IT.java</include>
                     </includes>
+                    <dependenciesToScan>
+                        <dependency>org.gephi:gephi-plugins-tests</dependency>
+                    </dependenciesToScan>
                 </configuration>
-            </plugin>
-
-            <!-- gephi-plugins-tests ships its contract tests as regular compiled classes in
-                 its jar rather than a test-jar, so unpack them into test-classes for Surefire
-                 to pick up -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.11.0</version>
-                <executions>
-                    <execution>
-                        <id>unpack-gephi-plugins-tests</id>
-                        <phase>process-test-classes</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includeArtifactIds>gephi-plugins-tests</includeArtifactIds>
-                            <includeScope>test</includeScope>
-                            <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
