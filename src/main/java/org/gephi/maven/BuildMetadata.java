@@ -89,6 +89,36 @@ public class BuildMetadata extends AbstractMojo {
     @Parameter(required = true)
     protected String metadataUrl;
 
+    /**
+     * Author email, shown on the plugin page. Declared here so it's a
+     * recognized configuration key of this plugin rather than of the
+     * nbm-maven-plugin (see https://github.com/gephi/gephi-maven-plugin/issues/14).
+     * Read per-module directly from each module's configuration by
+     * {@link MetadataUtils#getAuthors(MavenProject)}, not injected.
+     */
+    @Parameter
+    protected String authorEmail;
+
+    /**
+     * Author url, shown on the plugin page. Declared here so it's a
+     * recognized configuration key of this plugin rather than of the
+     * nbm-maven-plugin (see https://github.com/gephi/gephi-maven-plugin/issues/14).
+     * Read per-module directly from each module's configuration by
+     * {@link MetadataUtils#getAuthors(MavenProject)}, not injected.
+     */
+    @Parameter
+    protected String authorUrl;
+
+    /**
+     * Source code url, shown on the plugin page. Declared here so it's a
+     * recognized configuration key of this plugin rather than of the
+     * nbm-maven-plugin (see https://github.com/gephi/gephi-maven-plugin/issues/14).
+     * Read per-module directly from each module's configuration by
+     * {@link MetadataUtils#getSourceCode(MavenProject, org.apache.maven.plugin.logging.Log)}, not injected.
+     */
+    @Parameter
+    protected String sourceCodeUrl;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         String gephiVersion = (String) project.getProperties().get("gephi.version");

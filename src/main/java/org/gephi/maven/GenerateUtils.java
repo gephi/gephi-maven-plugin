@@ -247,11 +247,12 @@ public class GenerateUtils {
         }
     }
 
-    protected static void createTopPomFile(File file, String gephiVersion, String orgId, String artifactId, String version, String brandingName, String authorName, String authorEmail, String authorUrl, String licenseName, String licenseFile, String sourceCodeUrl, String homepageUrl) throws MojoExecutionException {
+    protected static void createTopPomFile(File file, String pluginVersion, String gephiVersion, String orgId, String artifactId, String version, String brandingName, String authorName, String authorEmail, String authorUrl, String licenseName, String licenseFile, String sourceCodeUrl, String homepageUrl) throws MojoExecutionException {
         VelocityEngine ve = GenerateUtils.initVelocity();
         Template t = ve.getTemplate("org/gephi/maven/templates/top-plugin-pom.xml", "UTF-8");
 
         VelocityContext context = new VelocityContext();
+        context.put("plugin_version", pluginVersion);
         context.put("gephi_version", gephiVersion);
         context.put("org_id", orgId);
         context.put("artifact_id", artifactId);
@@ -279,5 +280,31 @@ public class GenerateUtils {
             log.debug("Created folder at '" + folder.getAbsolutePath() + "'");
         }
         return folder;
+    }
+
+    /**
+     * Builds a Java package name from the organization and artifact ids.
+     * <p>
+     * Dashes are removed as they are not allowed in Java package names.
+     *
+     * @param orgId organization id (e.g. my.company)
+     * @param artifactId artifact id (e.g. my-plugin)
+     * @return package name (e.g. my.company.myplugin)
+     */
+    protected static String getPackageName(String orgId, String artifactId) {
+        return orgId.replace("-", "") + "." + artifactId.replace("-", "");
+    }
+
+    /**
+     * Creates the folder hierarchy matching the given Java package name,
+     * inside the provided source folder (e.g. src/main/java).
+     *
+     * @param sourceFolder source folder (e.g. src/main/java)
+     * @param packageName package name (e.g. my.company.myplugin)
+     * @param log log
+     * @return the created package folder
+     */
+    protected static File createPackageFolder(File sourceFolder, String packageName, Log log) {
+        return createFolder(new File(sourceFolder, packageName.replace('.', File.separatorChar)), log);
     }
 }

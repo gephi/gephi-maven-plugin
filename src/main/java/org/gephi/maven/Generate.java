@@ -158,7 +158,7 @@ public class Generate extends AbstractMojo {
         getLog().debug("Obtained source code url from Git: " + sourceCodeUrl);
 
         //Create pom.xml
-        GenerateUtils.createTopPomFile(new File(pluginFolder, "pom.xml"), gephiVersion, org, artifact, version, branding, author, authorEmail, authorUrl, license, null, sourceCodeUrl, null);
+        GenerateUtils.createTopPomFile(new File(pluginFolder, "pom.xml"), GenerateUtils.getPluginVersion(project), gephiVersion, org, artifact, version, branding, author, authorEmail, authorUrl, license, null, sourceCodeUrl, null);
         getLog().debug("Created 'pom.xml' file at '" + pluginFolder.getAbsolutePath() + "'");
 
         //Readme
@@ -170,12 +170,18 @@ public class Generate extends AbstractMojo {
         //Create nbm, java and resources in src/main folder
         File srcMain = GenerateUtils.createFolder(new File(pluginFolder, "src" + File.separator + "main"), getLog());
         File nbmFolder = GenerateUtils.createFolder(new File(srcMain, "nbm"), getLog());
-        GenerateUtils.createFolder(new File(srcMain, "java"), getLog());
+        File srcMainJava = GenerateUtils.createFolder(new File(srcMain, "java"), getLog());
         GenerateUtils.createFolder(new File(srcMain, "resources"), getLog());
 
         //Create src/test/java
         File srcTest = GenerateUtils.createFolder(new File(pluginFolder, "src" + File.separator + "test"), getLog());
-        GenerateUtils.createFolder(new File(srcTest, "java"), getLog());
+        File srcTestJava = GenerateUtils.createFolder(new File(srcTest, "java"), getLog());
+
+        //Create package folder based on org/artifact ids, so classes aren't left in the default package
+        String packageName = GenerateUtils.getPackageName(org, artifact);
+        GenerateUtils.createPackageFolder(srcMainJava, packageName, getLog());
+        GenerateUtils.createPackageFolder(srcTestJava, packageName, getLog());
+        getLog().debug("Created package folder for '" + packageName + "' in 'src/main/java' and 'src/test/java'");
 
         //Create manifest
         GenerateUtils.createManifest(new File(nbmFolder, "manifest.mf"), branding, shortDescription, longDescription, category);
@@ -192,7 +198,8 @@ public class Generate extends AbstractMojo {
         getLog().info("The configuration is successful. All values can be changed afterwards by editing the following configurations files:\n"
                 + "  - pom.xml: Module path listed in <modules></modules>, need to be updated if module folder is renamed\n"
                 + "  - modules" + File.separator + folder + File.separator + "pom.xml: Organization, version, name, author, license\n"
-                + "  - modules" + File.separator + folder + File.separator + "src" + File.separator + "main" + File.separator + "nbm: Branding name, short description, long description, category");
+                + "  - modules" + File.separator + folder + File.separator + "src" + File.separator + "main" + File.separator + "nbm: Branding name, short description, long description, category\n"
+                + "  - modules" + File.separator + folder + File.separator + "src" + File.separator + "main" + File.separator + "java" + File.separator + packageName.replace('.', File.separatorChar) + ": Java classes should be added here (or in a sub-package), the default package is not supported");
         getLog().info("Finished.");
     }
 
