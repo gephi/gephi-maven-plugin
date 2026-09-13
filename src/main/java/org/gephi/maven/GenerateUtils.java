@@ -252,19 +252,19 @@ public class GenerateUtils {
         Template t = ve.getTemplate("org/gephi/maven/templates/top-plugin-pom.xml", "UTF-8");
 
         VelocityContext context = new VelocityContext();
-        context.put("plugin_version", pluginVersion);
-        context.put("gephi_version", gephiVersion);
-        context.put("org_id", orgId);
-        context.put("artifact_id", artifactId);
-        context.put("version", version);
-        context.put("branding_name", brandingName);
-        context.put("license_name", licenseName);
-        context.put("license_file", licenseFile);
-        context.put("author_name", authorName);
-        context.put("author_email", authorEmail);
-        context.put("author_url", authorUrl);
-        context.put("sourcecode_url", sourceCodeUrl);
-        context.put("homepage_url", homepageUrl);
+        context.put("plugin_version", escapeXml(pluginVersion));
+        context.put("gephi_version", escapeXml(gephiVersion));
+        context.put("org_id", escapeXml(orgId));
+        context.put("artifact_id", escapeXml(artifactId));
+        context.put("version", escapeXml(version));
+        context.put("branding_name", escapeXml(brandingName));
+        context.put("license_name", escapeXml(licenseName));
+        context.put("license_file", escapeXml(licenseFile));
+        context.put("author_name", escapeXml(authorName));
+        context.put("author_email", escapeXml(authorEmail));
+        context.put("author_url", escapeXml(authorUrl));
+        context.put("sourcecode_url", escapeXml(sourceCodeUrl));
+        context.put("homepage_url", escapeXml(homepageUrl));
 
         try {
             FileWriter writer = new FileWriter(file);
@@ -273,6 +273,26 @@ public class GenerateUtils {
         } catch (IOException e) {
             throw new MojoExecutionException("Error writing pom.xml file", e);
         }
+    }
+
+    /**
+     * Escapes XML special characters (&amp;, &lt;, &gt;, &quot;, &apos;) in the
+     * given text so it can be safely inserted as XML element content or
+     * attribute value.
+     *
+     * @param text text to escape, may be null
+     * @return escaped text, or null if the input was null
+     */
+    protected static String escapeXml(String text) {
+        if (text == null) {
+            return null;
+        }
+        return text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
     }
 
     protected static File createFolder(File folder, Log log) {
