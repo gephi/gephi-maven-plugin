@@ -86,7 +86,7 @@ public class BuildMetadata extends AbstractMojo {
     /**
      * Metadata url.
      */
-    @Parameter(required = true)
+    @Parameter(required = true, defaultValue = "https://gephi.org/gephi-plugins/plugins/")
     protected String metadataUrl;
 
     /**
