@@ -69,20 +69,13 @@
 #end
 
             <!-- Also run the generic contract tests bundled inside gephi-plugins-tests
-                 (e.g. LayoutIT), which Surefire otherwise wouldn't discover since they
-                 aren't compiled from this project's own src/test/java -->
+                 (e.g. LayoutContractTest), which Surefire otherwise wouldn't discover since
+                 they aren't compiled from this project's own src/test/java -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.6.0</version>
                 <configuration>
-                    <includes>
-                        <include>**/Test*.java</include>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
-                        <include>**/*TestCase.java</include>
-                        <include>**/*IT.java</include>
-                    </includes>
                     <dependenciesToScan>
                         <dependency>org.gephi:gephi-plugins-tests</dependency>
                     </dependenciesToScan>
