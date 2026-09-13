@@ -173,17 +173,46 @@ public class Validate extends AbstractMojo {
     }
 
     /**
-     * Fails when a 'licenseFile' configuration is set but points to a file
-     * that doesn't exist, since this is always a mistake (not an optional
-     * detail like a missing README or screenshot).
+     * Default file name used when downloading a license text for a project
+     * that has no 'licenseFile' configured at all.
+     */
+    private static final String DEFAULT_LICENSE_FILE_NAME = "LICENSE.txt";
+
+    /**
+     * Checks that a license file exists for the project, either at the
+     * configured 'licenseFile' path or, if not configured, at a conventional
+     * default location. When the file is missing and the 'licenseName' is a
+     * recognized common license (e.g. 'Apache 2.0', 'MIT'), its text is
+     * automatically downloaded from SPDX's license-list-data so contributors
+     * don't have to track it down themselves.
+     * <p>
+     * Still fails when an explicitly configured 'licenseFile' points to a
+     * missing file and the license isn't recognized, since that combination
+     * is always a mistake. Otherwise, an unrecognized license only produces
+     * a warning.
      */
     private void checkLicenseFile(MavenProject moduleProject) throws MojoExecutionException {
+        String licenseName = MetadataUtils.getLicenseName(moduleProject);
         String licenseFile = MetadataUtils.getLicenseFile(moduleProject);
-        if (licenseFile != null && !licenseFile.trim().isEmpty()) {
-            File file = new File(moduleProject.getBasedir(), licenseFile);
-            if (!file.exists()) {
-                throw new MojoExecutionException("The 'licenseFile' configuration for project '" + moduleProject.getName() + "' points to '" + licenseFile + "' but this file can't be found in '" + moduleProject.getBasedir().getAbsolutePath() + "'.");
-            }
+        boolean licenseFileConfigured = licenseFile != null && !licenseFile.trim().isEmpty();
+        String targetPath = licenseFileConfigured ? licenseFile : DEFAULT_LICENSE_FILE_NAME;
+        File file = new File(moduleProject.getBasedir(), targetPath);
+
+        if (file.exists()) {
+            return;
+        }
+
+        String spdxId = LicenseUtils.resolveSpdxId(licenseName);
+        if (spdxId != null && LicenseUtils.downloadLicenseText(spdxId, file, getLog())) {
+            getLog().info("Downloaded the '" + licenseName + "' license text to '" + targetPath + "' for project '" + moduleProject.getName() + "'."
+                    + (licenseFileConfigured ? "" : " Consider referencing it by adding <licenseFile>" + targetPath + "</licenseFile> to the 'nbm-maven-plugin' configuration."));
+            return;
+        }
+
+        if (licenseFileConfigured) {
+            throw new MojoExecutionException("The 'licenseFile' configuration for project '" + moduleProject.getName() + "' points to '" + licenseFile + "' but this file can't be found in '" + moduleProject.getBasedir().getAbsolutePath() + "', and the license '" + licenseName + "' isn't recognized for automatic download. Please add the file manually.");
+        } else {
+            getLog().warn("No license file was found for project '" + moduleProject.getName() + "', and the license '" + licenseName + "' isn't recognized for automatic download. Consider adding a license file and referencing it via the 'licenseFile' configuration.");
         }
     }
 
