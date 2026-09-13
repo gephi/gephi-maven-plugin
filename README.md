@@ -68,7 +68,7 @@ This command is automatically run when working on the `gephi-plugins` repository
 
 - Checks that no two plugins in the same build share the same `groupId`/`artifactId`, since it's used to derive the NetBeans module code name and a collision would prevent one of them from installing correctly.
 
-- Checks that a configured `licenseFile` actually exists.
+- Checks that a license file exists, either at the configured `licenseFile` path or, if not configured, at a default `LICENSE.txt` location. If missing and the `licenseName` is a common one (e.g. "Apache 2.0", "MIT", "BSD 3-Clause", "GPL v3", "LGPL v3", "MPL 2.0"), its text is automatically downloaded from [SPDX's license-list-data](https://github.com/spdx/license-list-data). Otherwise, it only warns unless `licenseFile` was explicitly configured to a path that doesn't exist.
 
 - Warns when the project has no `README.md` file, since it's displayed on the plugin's page.
 
