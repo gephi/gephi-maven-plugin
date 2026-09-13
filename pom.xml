@@ -40,7 +40,7 @@
     <!-- Properties -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.required>3.6.3</maven.required>
+        <maven.required>3.8.1</maven.required>
     </properties>
     
     <!-- Maven required version -->
