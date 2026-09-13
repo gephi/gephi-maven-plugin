@@ -31,6 +31,20 @@
                     <licenseFile>$license_file</licenseFile>
 #end
                     <author>$author_name</author>
+#if( $homepage_url )
+                    <homePageUrl>$homepage_url</homePageUrl>
+#end
+                    <publicPackages>
+                        <!-- Insert public packages -->
+                    </publicPackages>
+                </configuration>
+            </plugin>
+#if( $author_email || $author_url || $sourcecode_url )
+            <plugin>
+                <groupId>org.gephi</groupId>
+                <artifactId>gephi-maven-plugin</artifactId>
+                <version>$plugin_version</version>
+                <configuration>
 #if( $author_email )
                     <authorEmail>$author_email</authorEmail>
 #end
@@ -40,14 +54,9 @@
 #if( $sourcecode_url )
                     <sourceCodeUrl>$sourcecode_url</sourceCodeUrl>
 #end
-#if( $homepage_url )
-                    <homePageUrl>$homepage_url</homePageUrl>
-#end
-                    <publicPackages>
-                        <!-- Insert public packages -->
-                    </publicPackages>
                 </configuration>
             </plugin>
+#end
         </plugins>
     </build>
 

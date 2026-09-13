@@ -192,7 +192,7 @@ public class Migrate extends AbstractMojo {
 
             //Create pom.xml
             File modulePomFile = new File(pluginFolder, "pom.xml");
-            GenerateUtils.createTopPomFile(modulePomFile, gephiVersion, org, artifact, "1.0.0", folder, metadata.author, null, null, license, licenseFile, sourceCodeUrl, metadata.homepageUrl);
+            GenerateUtils.createTopPomFile(modulePomFile, GenerateUtils.getPluginVersion(project), gephiVersion, org, artifact, "1.0.0", folder, metadata.author, null, null, license, licenseFile, sourceCodeUrl, metadata.homepageUrl);
             getLog().debug("Created 'pom.xml' file at '" + pluginFolder.getAbsolutePath() + "'");
 
             //Insert deps

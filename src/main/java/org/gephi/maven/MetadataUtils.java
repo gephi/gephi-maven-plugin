@@ -84,15 +84,12 @@ public class MetadataUtils {
     protected static List<Author> getAuthors(MavenProject project) {
         Plugin nbmPlugin = lookupNbmPlugin(project);
         if (nbmPlugin != null) {
-            Xpp3Dom config = (Xpp3Dom) nbmPlugin.getConfiguration();
-            if (config != null && config.getChild("author") != null) {
-                String authorName = config.getChild("author").getValue();
-                String authorEmail = config.getChild("authorEmail") != null ? config.getChild("authorEmail").getValue() : null;
-                String authorUrl = config.getChild("authorUrl") != null ? config.getChild("authorUrl").getValue() : null;
+            Xpp3Dom nbmConfig = (Xpp3Dom) nbmPlugin.getConfiguration();
+            if (nbmConfig != null && nbmConfig.getChild("author") != null) {
                 Author author = new Author();
-                author.name = authorName;
-                author.email = authorEmail;
-                author.link = authorUrl;
+                author.name = nbmConfig.getChild("author").getValue();
+                author.email = getPluginConfigValue(project, "authorEmail", nbmConfig);
+                author.link = getPluginConfigValue(project, "authorUrl", nbmConfig);
 
                 return Arrays.asList(new Author[]{author});
             }
@@ -107,13 +104,55 @@ public class MetadataUtils {
      * @return NBM plugin
      */
     protected static Plugin lookupNbmPlugin(MavenProject project) {
+        return lookupPlugin(project, "org.apache.netbeans.utilities:nbm-maven-plugin");
+    }
+
+    /**
+     * Lookup and return this plugin (gephi-maven-plugin) as configured on
+     * the project.
+     *
+     * @param project project
+     * @return gephi-maven-plugin plugin
+     */
+    protected static Plugin lookupGephiPlugin(MavenProject project) {
+        return lookupPlugin(project, "org.gephi:gephi-maven-plugin");
+    }
+
+    private static Plugin lookupPlugin(MavenProject project, String key) {
         List plugins = project.getBuildPlugins();
 
         for (Iterator iterator = plugins.iterator(); iterator.hasNext();) {
             Plugin plugin = (Plugin) iterator.next();
-            if ("org.apache.netbeans.utilities:nbm-maven-plugin".equalsIgnoreCase(plugin.getKey())) {
+            if (key.equalsIgnoreCase(plugin.getKey())) {
                 return plugin;
             }
+        }
+        return null;
+    }
+
+    /**
+     * Lookup a configuration value in this plugin's (gephi-maven-plugin)
+     * own configuration, which is the preferred location since it avoids
+     * declaring attributes unknown to the nbm-maven-plugin (see
+     * https://github.com/gephi/gephi-maven-plugin/issues/14). Falls back to
+     * the given legacy configuration (typically the nbm-maven-plugin's) for
+     * backward compatibility with plugins that haven't migrated yet.
+     *
+     * @param project project
+     * @param key configuration key
+     * @param legacyConfig legacy configuration to fallback to, can be null
+     * @return configuration value or null if not found
+     */
+    private static String getPluginConfigValue(MavenProject project, String key, Xpp3Dom legacyConfig) {
+        Plugin gephiPlugin = lookupGephiPlugin(project);
+        if (gephiPlugin != null) {
+            Xpp3Dom config = (Xpp3Dom) gephiPlugin.getConfiguration();
+            if (config != null && config.getChild(key) != null) {
+                return config.getChild(key).getValue();
+            }
+        }
+        if (legacyConfig != null && legacyConfig.getChild(key) != null) {
+            return legacyConfig.getChild(key).getValue();
         }
         return null;
     }
@@ -155,19 +194,16 @@ public class MetadataUtils {
      */
     protected static String getSourceCode(MavenProject project, Log log) {
         Plugin nbmPlugin = lookupNbmPlugin(project);
-        if (nbmPlugin != null) {
-            Xpp3Dom config = (Xpp3Dom) nbmPlugin.getConfiguration();
-            if (config != null && config.getChild("sourceCodeUrl") != null) {
-                return config.getChild("sourceCodeUrl").getValue();
-            }
+        Xpp3Dom nbmConfig = nbmPlugin != null ? (Xpp3Dom) nbmPlugin.getConfiguration() : null;
+        String sourceCodeUrl = getPluginConfigValue(project, "sourceCodeUrl", nbmConfig);
+        if (sourceCodeUrl != null) {
+            return sourceCodeUrl;
         }
 
         Scm scm = project.getScm();
         if (scm != null && scm.getUrl() != null && !scm.getUrl().isEmpty()) {
             log.debug("SCM configuration found, with url = '" + scm.getUrl() + "'");
             return scm.getUrl();
-        } else {
-
         }
         return null;
     }
