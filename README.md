@@ -26,7 +26,7 @@ Maven:
 </plugin>
 ```
 
-Development builds can be found on [Sonatype's Snapshot Repository](https://oss.sonatype.org/content/repositories/snapshots/org/gephi/gephi-maven-plugin/).
+Development builds can be found on [Central Portal's Snapshot Repository](https://central.sonatype.com/repository/maven-snapshots/org/gephi/gephi-maven-plugin/).
 
 ## How it works
 
