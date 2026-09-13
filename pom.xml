@@ -58,7 +58,7 @@
         <dependency>
             <groupId>org.apache.netbeans.utilities</groupId>
             <artifactId>nbm-maven-plugin</artifactId>
-            <version>4.6</version>
+            <version>14.5</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
