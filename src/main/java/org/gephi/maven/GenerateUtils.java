@@ -276,7 +276,7 @@ public class GenerateUtils {
     }
 
     /**
-     * Escapes XML special characters (&amp;, &lt;, &gt;, &quot;, &apos;) in the
+     * Escapes XML special characters (&amp;, &lt;, &gt;, &quot;, &#39;) in the
      * given text so it can be safely inserted as XML element content or
      * attribute value.
      *
