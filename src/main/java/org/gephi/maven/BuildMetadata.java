@@ -90,6 +90,16 @@ public class BuildMetadata extends AbstractMojo {
     protected String metadataUrl;
 
     /**
+     * Base url users download NBMs from, when it isn't {@link #metadataUrl}
+     * (e.g. GitHub release assets, which count downloads). When set, each
+     * version written gets a <em>download_url</em> of <em>downloadUrl + Gephi
+     * minor version + "/" + file name</em>, next to its <em>url</em> relative
+     * to {@link #metadataUrl}.
+     */
+    @Parameter
+    protected String downloadUrl;
+
+    /**
      * Author email, shown on the plugin page. Declared here so it's a
      * recognized configuration key of this plugin rather than of the
      * nbm-maven-plugin (see https://github.com/gephi/gephi-maven-plugin/issues/14).
@@ -253,6 +263,9 @@ public class BuildMetadata extends AbstractMojo {
                 Version v = new Version();
                 v.last_update = dateFormat.format(new Date());
                 v.url = gephiMinorVersion + "/" + ModuleUtils.getModuleDownloadPath(entry.getKey(), entry.getValue(), new File(outputDirectory, gephiMinorVersion), getLog());
+                if (downloadUrl != null && !downloadUrl.isEmpty()) {
+                    v.download_url = downloadUrl + v.url;
+                }
                 v.plugin_version = entry.getKey().getVersion();
                 pm.versions.put(gephiVersion, v);
 

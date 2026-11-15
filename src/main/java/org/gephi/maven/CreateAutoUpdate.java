@@ -73,6 +73,17 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
     @Parameter(required = true)
     protected String metadataUrl;
 
+    /**
+     * Base url users download NBMs from, when it isn't {@link #metadataUrl}
+     * (e.g. GitHub release assets, which count downloads). When set,
+     * <em>updates.xml</em> points to <em>downloadUrl + Gephi minor version +
+     * "/" + NBM file name</em> instead of the NBM next to it. Unchanged plugins
+     * are still downloaded from {@link #metadataUrl}, so the build doesn't
+     * count as a download.
+     */
+    @Parameter
+    protected String downloadUrl;
+
     @Parameter(defaultValue = "false")
     protected Boolean skipUnchangedVersions;
 
@@ -185,6 +196,10 @@ public class CreateAutoUpdate extends AbstractNetbeansMojo {
             MakeUpdateDesc descTask = (MakeUpdateDesc) antProject.createTask("updatedist");
             File xmlFile = new File(outputFolder, fileName);
             descTask.setDesc(xmlFile);
+            if (downloadUrl != null && !downloadUrl.isEmpty()) {
+                // MakeUpdateDesc appends the "/" itself
+                descTask.setDistBase(downloadUrl + gephiMinorVersion);
+            }
             FileSet fs = new FileSet();
             fs.setDir(outputFolder);
             fs.createInclude().setName("**/*.nbm");

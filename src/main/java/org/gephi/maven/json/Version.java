@@ -18,6 +18,7 @@ package org.gephi.maven.json;
 public class Version {
 
     public String url;
+    public String download_url;
     public String last_update;
     public String plugin_version;
 }
